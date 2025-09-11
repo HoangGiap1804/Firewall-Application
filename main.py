@@ -7,6 +7,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from log_mode import LogModel
 from rule_input import IptablesModel
 from add_rule import IptablesHandler
+from app_network_model import AppNetworkModel
 
 app = QGuiApplication(sys.argv)
 engine = QQmlApplicationEngine()
@@ -19,6 +20,9 @@ engine.rootContext().setContextProperty("inputRuleModel", iptable_model)
 
 handler = IptablesHandler()
 engine.rootContext().setContextProperty("pyHandler", handler)
+
+model = AppNetworkModel()
+engine.rootContext().setContextProperty("appModel", model)
 
 engine.load("main.qml")
 

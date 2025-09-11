@@ -39,6 +39,14 @@ ApplicationWindow {
                     stackView.push(page3)
                 }
             }
+
+            Button {
+                text: "Go to Page 4"
+                onClicked: {
+                    stackView.pop()
+                    stackView.push(page4)
+                }
+            }
         }
         StackView {
             id: stackView
@@ -76,6 +84,16 @@ ApplicationWindow {
                 title: "Page 3"
 
                 AddRule{}
+            }
+        }
+
+    Component {
+            id: page4
+            Page {
+                id: p4
+                title: "Page 4"
+
+                AppNetwork{}
             }
         }
 }
