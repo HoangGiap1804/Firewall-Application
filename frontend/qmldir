@@ -1,0 +1,5 @@
+module frontend
+AddRule 1.0 AddRule.qml
+AppNetWork 1.0 AppNetWork.qml
+ShowInputRule 1.0 ShowInputRule.qml
+ShowPacket 1.0 ShowPacket.qml

@@ -4,10 +4,10 @@ from PySide6.QtCore import QAbstractListModel, Qt, QModelIndex, QByteArray, QPro
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 
-from log_mode import LogModel
-from rule_input import IptablesModel
-from add_rule import IptablesHandler
-from app_network_model import AppNetworkModel
+from backend.log_mode import LogModel
+from backend.rule_input import IptablesModel
+from backend.add_rule import IptablesHandler
+from backend.app_network_model import AppNetworkModel
 
 app = QGuiApplication(sys.argv)
 engine = QQmlApplicationEngine()
