@@ -29,6 +29,8 @@ Column {
                 Text { anchors.centerIn: parent; text: "Source" } }
             Rectangle { width: 120; height: 30; color: "lightgray"; border.width: 1
                 Text { anchors.centerIn: parent; text: "Destination" } }
+            Rectangle { width: 50; height: 30; color: "lightgray"; border.width: 1
+                Text { anchors.centerIn: parent; text: "GRP" } }
         }
 
         // Scroll chứa dữ liệu
@@ -62,7 +64,7 @@ Column {
                             Text { text: model.out; width: 50 }
                             Text { text: model.source; width: 120 }
                             Text { text: model.destination; width: 120 }
-
+                            Text { text: model.group; width: 120}
                             Button { 
                                 text: "DELETE"
                                 width: 100

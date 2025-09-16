@@ -1,5 +1,13 @@
 import subprocess
 from PySide6.QtCore import QAbstractListModel, Qt, QModelIndex, QTimer, Signal, QObject, Slot
+import os
+import json
+
+def get_group_map():
+    if os.path.exists("rules_meta.json"):
+        with open("rules_meta.json", "r") as f:
+            return json.load(f)
+    return {}
 
 def get_input_rules():
     try:
@@ -45,10 +53,12 @@ class IptablesModel(QAbstractListModel):
     OutRole = Qt.UserRole + 8
     SourceRole = Qt.UserRole + 9
     DestinationRole = Qt.UserRole + 10
+    GroupRole = Qt.UserRole + 11
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.rules = get_input_rules()
+        self.group_map = get_group_map()
 
         # Timer refresh mỗi 2 giây
         self.timer = QTimer(self)
@@ -74,6 +84,9 @@ class IptablesModel(QAbstractListModel):
             self.SourceRole: "source",
             self.DestinationRole: "destination"
         }
+        if role == self.GroupRole:
+            num = self.rules[index.row()]["num"]
+            return self.group_map.get(num, "None")
         if role in role_map:
             return rule[role_map[role]]
         return None
@@ -89,10 +102,12 @@ class IptablesModel(QAbstractListModel):
             self.InRole: b"in",
             self.OutRole: b"out",
             self.SourceRole: b"source",
-            self.DestinationRole: b"destination"
+            self.DestinationRole: b"destination",
+            self.GroupRole: b"group"
         }
 
     def refreshRules(self):
+        self.group_map = get_group_map()
         new_rules = get_input_rules()
         if new_rules != self.rules:  # nếu có thay đổi
             self.beginResetModel()
@@ -112,5 +127,11 @@ class IptablesModel(QAbstractListModel):
         try:
             subprocess.run(cmd, check=True)
             print(f"Đã xóa rule số {num}")
+            meta = get_group_map()
+            if num in meta:
+                del meta[num]
+                with open("rules_meta.json","w") as f:
+                    json.dump(meta, f, indent=4)
+                    
         except subprocess.CalledProcessError as e:
             print(f"Lỗi khi xóa rule: {e}")
