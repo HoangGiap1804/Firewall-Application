@@ -59,6 +59,7 @@ class IptablesModel(QAbstractListModel):
         super().__init__(parent)
         self.rules = get_input_rules()
         self.group_map = get_group_map()
+        self.filter_group = ""
 
         # Timer refresh mỗi 2 giây
         self.timer = QTimer(self)
@@ -106,14 +107,28 @@ class IptablesModel(QAbstractListModel):
             self.GroupRole: b"group"
         }
 
+
     def refreshRules(self):
         self.group_map = get_group_map()
-        new_rules = get_input_rules()
-        if new_rules != self.rules:  # nếu có thay đổi
+        all_rules = get_input_rules()
+
+        if self.filter_group:
+            filtered = []
+            for r in all_rules:
+                num = r["num"]
+                g = self.group_map.get(num, "None")
+                if g == self.filter_group:
+                    filtered.append(r)
+            new_rules = filtered
+        else:
+            new_rules = all_rules
+
+        if new_rules != self.rules:
             self.beginResetModel()
             self.rules = new_rules
             self.endResetModel()
-            print("Rules updated!")  # bạn có thể emit signal để QML biết
+            print("Rules updated!")
+    
     @Slot(str)
     def deleteRule(self, num):
         """
@@ -135,3 +150,11 @@ class IptablesModel(QAbstractListModel):
                     
         except subprocess.CalledProcessError as e:
             print(f"Lỗi khi xóa rule: {e}")
+            
+    @Slot(str)
+    def setFilterGroup(self, group_name):
+        """
+        Đặt tên group cần lọc (gọi từ QML)
+        """
+        self.filter_group = group_name.strip()
+        self.refreshRules()
