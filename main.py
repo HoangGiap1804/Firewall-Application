@@ -8,6 +8,8 @@ from backend.log_mode import LogModel
 from backend.rule_input import IptablesModel
 from backend.add_rule import IptablesHandler
 from backend.app_network_model import AppNetworkModel
+from backend.notification import Notification
+from backend.log_matcher import LogWatcher
 
 app = QGuiApplication(sys.argv)
 engine = QQmlApplicationEngine()
@@ -24,6 +26,12 @@ engine.rootContext().setContextProperty("pyHandler", handler)
 model = AppNetworkModel()
 engine.rootContext().setContextProperty("appModel", model)
 
+notification = Notification()
+engine.rootContext().setContextProperty("notification", notification)
+
+watcher = LogWatcher()
+engine.rootContext().setContextProperty("LogWatcher", watcher)
+
 engine.load("main.qml")
 
 if not engine.rootObjects():
@@ -38,8 +46,8 @@ process.setArguments(["tail", "-f", "/var/log/kern.log"])
 # Lọc log IPTables-INPUT
 def on_ready_read():
     for line in process.readAllStandardOutput().data().decode().splitlines():
-        if "IPTables-INPUT" in line:
-            log_model.addLog(line)
+        log_model.addLog(line)
+            
 
 process.readyReadStandardOutput.connect(on_ready_read)
 process.start()

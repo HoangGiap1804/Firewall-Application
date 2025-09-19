@@ -61,23 +61,29 @@ Column {
 
                     Repeater {
                         model: logModel
-                        Row {
-                            spacing: 10
-                            Text { text: model.in; width: 50 }
-                            Text { text: model.out; width: 50 }
-                            Text { text: model.mac; width: 300 }
-                            Text { text: model.src; width: 120 }
-                            Text { text: model.dst; width: 120 }
-                            Text { text: model.len; width: 50 }
-                            Text { text: model.tos; width: 50 }
-                            Text { text: model.prec; width: 50 }
-                            Text { text: model.ttl; width: 50 }
-                            Text { text: model.id; width: 50 }
-                            Text { text: model.proto; width: 50 }
-                            Text { text: model.spt; width: 50 }
-                            Text { text: model.dpt; width: 50 }
-                            Text { text: model.len2; width: 50 }
+                        Rectangle{
+                            color: "red"
+                            width: flick.width
+                            height: 30
+                            Row {
+                                spacing: 10
+                                Text { text: model.in; width: 50 }
+                                Text { text: model.out; width: 50 }
+                                Text { text: model.mac; width: 300 }
+                                Text { text: model.src; width: 120 }
+                                Text { text: model.dst; width: 120 }
+                                Text { text: model.len; width: 50 }
+                                Text { text: model.tos; width: 50 }
+                                Text { text: model.prec; width: 50 }
+                                Text { text: model.ttl; width: 50 }
+                                Text { text: model.id; width: 50 }
+                                Text { text: model.proto; width: 50 }
+                                Text { text: model.spt; width: 50 }
+                                Text { text: model.dpt; width: 50 }
+                                Text { text: model.len2; width: 50 }
+                            }
                         }
+                        
                     }
                 }
             }
