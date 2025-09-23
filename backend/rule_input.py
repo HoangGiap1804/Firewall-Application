@@ -1,7 +1,9 @@
 import subprocess
-from PySide6.QtCore import QAbstractListModel, Qt, QModelIndex, QTimer, Signal, QObject, Slot
+from PySide6.QtCore import QAbstractListModel, Qt, QModelIndex, QTimer, Slot
 import os
 import json
+
+META_FILE = "rules_meta.json"
 
 def get_group_map():
     if os.path.exists("rules_meta.json"):
@@ -17,23 +19,23 @@ def get_input_rules():
         )
         lines = result.stdout.splitlines()
         rules = []
-
-        # Bỏ 2 dòng header
         for line in lines[2:]:
-            if line.strip() == "":
+            if not line.strip():
                 continue
             parts = line.split()
+            rule_key = " ".join(parts[3:])  # key duy nhất, bỏ num/pkts/bytes
             rule = {
-                "num": parts[0] if len(parts) > 0 else "",
-                "pkts": parts[1] if len(parts) > 1 else "",
-                "bytes": parts[2] if len(parts) > 2 else "",
-                "target": parts[3] if len(parts) > 3 else "",
-                "prot": parts[4] if len(parts) > 4 else "",
-                "opt": parts[5] if len(parts) > 5 else "",
-                "in_": parts[6] if len(parts) > 6 else "",
-                "out": parts[7] if len(parts) > 7 else "",
-                "source": parts[8] if len(parts) > 8 else "",
-                "destination": parts[9] if len(parts) > 9 else ""
+                "num": parts[0],
+                "pkts": parts[1],
+                "bytes": parts[2],
+                "target": parts[3],
+                "prot": parts[4],
+                "opt": parts[5],
+                "in_": parts[6],
+                "out": parts[7],
+                "source": parts[8],
+                "destination": parts[9],
+                "rule_key": rule_key
             }
             rules.append(rule)
         return rules
@@ -41,7 +43,6 @@ def get_input_rules():
         print("Error:", e)
         return []
 
-# Model cho Repeater / TableView
 class IptablesModel(QAbstractListModel):
     NumRole = Qt.UserRole + 1
     PktsRole = Qt.UserRole + 2
@@ -61,7 +62,6 @@ class IptablesModel(QAbstractListModel):
         self.group_map = get_group_map()
         self.filter_group = ""
 
-        # Timer refresh mỗi 2 giây
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refreshRules)
         self.timer.start(1000)
@@ -86,8 +86,8 @@ class IptablesModel(QAbstractListModel):
             self.DestinationRole: "destination"
         }
         if role == self.GroupRole:
-            num = self.rules[index.row()]["num"]
-            return self.group_map.get(num, "None")
+            rule_key = rule["rule_key"]
+            return self.group_map.get(rule_key, "None")
         if role in role_map:
             return rule[role_map[role]]
         return None
@@ -107,7 +107,6 @@ class IptablesModel(QAbstractListModel):
             self.GroupRole: b"group"
         }
 
-
     def refreshRules(self):
         self.group_map = get_group_map()
         all_rules = get_input_rules()
@@ -115,8 +114,7 @@ class IptablesModel(QAbstractListModel):
         if self.filter_group:
             filtered = []
             for r in all_rules:
-                num = r["num"]
-                g = self.group_map.get(num, "None")
+                g = self.group_map.get(r["rule_key"], "None")
                 if g == self.filter_group:
                     filtered.append(r)
             new_rules = filtered
@@ -128,33 +126,38 @@ class IptablesModel(QAbstractListModel):
             self.rules = new_rules
             self.endResetModel()
             print("Rules updated!")
-    
+
     @Slot(str)
     def deleteRule(self, num):
-        """
-        Xóa rule INPUT theo số thứ tự (num)
-        """
         if not num.isdigit():
             print("Num phải là số nguyên!")
             return
+
+        # lấy rule_key trước khi xoá
+        rule_to_delete = None
+        for r in self.rules:
+            if r["num"] == num:
+                rule_to_delete = r["rule_key"]
+                break
 
         cmd = ["sudo", "iptables", "-D", "INPUT", num]
         try:
             subprocess.run(cmd, check=True)
             print(f"Đã xóa rule số {num}")
+
+            # Cập nhật JSON
             meta = get_group_map()
-            if num in meta:
-                del meta[num]
-                with open("rules_meta.json","w") as f:
+            if rule_to_delete and rule_to_delete in meta:
+                del meta[rule_to_delete]
+                with open(META_FILE, "w") as f:
                     json.dump(meta, f, indent=4)
-                    
+
+            self.refreshRules()
+
         except subprocess.CalledProcessError as e:
             print(f"Lỗi khi xóa rule: {e}")
-            
+
     @Slot(str)
     def setFilterGroup(self, group_name):
-        """
-        Đặt tên group cần lọc (gọi từ QML)
-        """
         self.filter_group = group_name.strip()
         self.refreshRules()
