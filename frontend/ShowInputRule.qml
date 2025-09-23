@@ -52,6 +52,28 @@ Column {
                     }
                 }
             }
+            Button {
+                text: "DELETE GROUP"
+                onClicked: {
+                    if (groupFilterField.text.trim() === "") {
+                        console.log("Vui lòng nhập group trước khi xoá")
+                    } else {
+                        confirmPopup.open()
+                    }
+                }
+            }
+
+            Dialog {
+                id: confirmPopup
+                modal: true
+                title: "Xác nhận xoá"
+
+                standardButtons: Dialog.Yes | Dialog.No
+
+                onAccepted: {
+                    inputRuleModel.deleteGroupRule(groupFilterField.text)
+                }
+            }
         }
 
         // Scroll chứa dữ liệu

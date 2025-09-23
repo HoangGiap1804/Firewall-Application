@@ -161,3 +161,47 @@ class IptablesModel(QAbstractListModel):
     def setFilterGroup(self, group_name):
         self.filter_group = group_name.strip()
         self.refreshRules()
+        
+    @Slot(str)
+    def deleteGroupRule(self, group_name):
+        """
+        Xóa tất cả rule thuộc group_name
+        """
+        group_name = group_name.strip()
+        if not group_name:
+            print("Group rỗng, không thể xoá")
+            return
+
+        meta = get_group_map()
+        keys_to_delete = [k for k, v in meta.items() if v == group_name]
+
+        if not keys_to_delete:
+            print(f"Không tìm thấy rule nào trong group '{group_name}'")
+            return
+
+        # Lấy danh sách rule hiện tại
+        all_rules = get_input_rules()
+
+        # Tìm các rule có rule_key nằm trong keys_to_delete
+        rules_to_delete = [r for r in all_rules if r["rule_key"] in keys_to_delete]
+
+        # Xóa lần lượt theo số thứ tự (num)
+        # Lưu ý: iptables đánh lại số sau mỗi lần xoá,
+        # nên phải xoá từ rule cuối cùng về đầu tiên để không lệch num
+        for r in sorted(rules_to_delete, key=lambda x: int(x["num"]), reverse=True):
+            num = r["num"]
+            try:
+                subprocess.run(["sudo", "iptables", "-D", "INPUT", num], check=True)
+                print(f"Đã xoá rule số {num} trong group '{group_name}'")
+            except subprocess.CalledProcessError as e:
+                print(f"Lỗi khi xoá rule số {num}: {e}")
+
+        # Xoá metadata
+        for k in keys_to_delete:
+            if k in meta:
+                del meta[k]
+        with open("rules_meta.json", "w") as f:
+            json.dump(meta, f, indent=4)
+
+        self.refreshRules()
+
