@@ -29,6 +29,51 @@ Column {
                 Text { anchors.centerIn: parent; text: "Source" } }
             Rectangle { width: 120; height: 30; color: "lightgray"; border.width: 1
                 Text { anchors.centerIn: parent; text: "Destination" } }
+            Rectangle { width: 50; height: 30; color: "lightgray"; border.width: 1
+                Text { anchors.centerIn: parent; text: "GRP" } }
+            TextField {
+                id: groupFilterField
+                placeholderText: "Group filter"
+                width: 200
+                onTextChanged: {
+                    if (text === "") {
+                        // Nếu xoá text thì reset filter để hiện tất cả
+                        inputRuleModel.setFilterGroup("")
+                    }
+                }
+            }
+            Button {
+                text: "VIEW GROUP"
+                onClicked: {
+                    if (groupFilterField.text.trim() === "") {
+                        console.log("View all rules.")
+                    } else {
+                        inputRuleModel.setFilterGroup(groupFilterField.text.trim())
+                    }
+                }
+            }
+            Button {
+                text: "DELETE GROUP"
+                onClicked: {
+                    if (groupFilterField.text.trim() === "") {
+                        console.log("Vui lòng nhập group trước khi xoá")
+                    } else {
+                        confirmPopup.open()
+                    }
+                }
+            }
+
+            Dialog {
+                id: confirmPopup
+                modal: true
+                title: "Xác nhận xoá"
+
+                standardButtons: Dialog.Yes | Dialog.No
+
+                onAccepted: {
+                    inputRuleModel.deleteGroupRule(groupFilterField.text)
+                }
+            }
         }
 
         // Scroll chứa dữ liệu
@@ -62,7 +107,7 @@ Column {
                             Text { text: model.out; width: 50 }
                             Text { text: model.source; width: 120 }
                             Text { text: model.destination; width: 120 }
-
+                            Text { text: model.group; width: 120}
                             Button { 
                                 text: "DELETE"
                                 width: 100
