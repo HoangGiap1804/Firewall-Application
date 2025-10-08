@@ -10,6 +10,7 @@ from backend.add_rule import IptablesHandler
 from backend.app_network_model import AppNetworkModel
 from backend.notification import Notification
 from backend.log_matcher import LogWatcher
+from backend.firewall_controller import FirewallController
 
 app = QGuiApplication(sys.argv)
 engine = QQmlApplicationEngine()
@@ -31,6 +32,9 @@ engine.rootContext().setContextProperty("notification", notification)
 
 watcher = LogWatcher()
 engine.rootContext().setContextProperty("LogWatcher", watcher)
+
+firewall = FirewallController()
+engine.rootContext().setContextProperty("firewall", firewall)
 
 engine.load("main.qml")
 
