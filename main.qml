@@ -46,6 +46,21 @@ ApplicationWindow {
                     stackView.push(page4)
                 }
             }
+
+            Button {
+                text: "Go to Page 5"
+                onClicked: {
+                    stackView.pop()
+                    stackView.push(page5)
+                }
+            }
+            Button {
+                text: "Firewall Controller"
+                onClicked: {
+                    stackView.pop()
+                    stackView.push(page6)
+                }
+            }
         }
         StackView {
             id: stackView
@@ -93,6 +108,26 @@ ApplicationWindow {
                 title: "Page 4"
 
                 AppNetwork{}
+            }
+        }
+
+    Component {
+            id: page5
+            Page {
+                id: p5
+                title: "Page 5"
+
+                Notification{}
+            }
+        }
+
+    Component {
+            id: page6
+            Page {
+                id: p6
+                title: "Firewall Controller"
+
+                FirewallController{}
             }
         }
 }

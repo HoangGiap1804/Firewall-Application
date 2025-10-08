@@ -3,3 +3,5 @@ AddRule 1.0 AddRule.qml
 AppNetWork 1.0 AppNetWork.qml
 ShowInputRule 1.0 ShowInputRule.qml
 ShowPacket 1.0 ShowPacket.qml
+Notification 1.0 Notification.qml
+FirewallController 1.0 FirewallController.qml
