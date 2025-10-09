@@ -61,6 +61,13 @@ ApplicationWindow {
                     stackView.push(page6)
                 }
             }
+            Button {
+                text: "Available Rules"
+                onClicked: {
+                    stackView.pop()
+                    stackView.push(page7)
+                }
+            }
         }
         StackView {
             id: stackView
@@ -128,6 +135,16 @@ ApplicationWindow {
                 title: "Firewall Controller"
 
                 FirewallController{}
+            }
+        }
+
+    Component {
+            id: page7
+            Page {
+                id: p7
+                title: "Available Rules"
+
+                AvailableRules{}
             }
         }
 }

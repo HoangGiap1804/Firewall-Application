@@ -11,6 +11,7 @@ from backend.app_network_model import AppNetworkModel
 from backend.notification import Notification
 from backend.log_matcher import LogWatcher
 from backend.firewall_controller import FirewallController
+from backend.available_rules import AvailableRules
 
 app = QGuiApplication(sys.argv)
 engine = QQmlApplicationEngine()
@@ -35,6 +36,9 @@ engine.rootContext().setContextProperty("LogWatcher", watcher)
 
 firewall = FirewallController()
 engine.rootContext().setContextProperty("firewall", firewall)
+
+available_rules = AvailableRules()
+engine.rootContext().setContextProperty("availableRules", available_rules)
 
 engine.load("main.qml")
 
