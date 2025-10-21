@@ -1,0 +1,9 @@
+{
+    "ICMP Flood": false,
+    "SYN Flood": false,
+    "Port Scan": false,
+    "IP Spoofing": false,
+    "Invalid Packet": false,
+    "Broadcast Control": false,
+    "Outbound Protection": false
+}

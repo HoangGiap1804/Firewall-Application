@@ -23,10 +23,10 @@ def parse_message(msg: str):
     return result
 
 
-class LogViewer(QtWidgets.QMainWindow):
+class LogTab(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.ui = uic.loadUi("frontend/tableView.ui")  # Đảm bảo file UI có tableWidget
+        self.ui = uic.loadUi("frontend/log_tab.ui")  # Đảm bảo file UI có tableWidget
 
         # Cấu hình table
         self.ui.tableWidget.setColumnCount(len(Roles))
@@ -76,9 +76,5 @@ class LogViewer(QtWidgets.QMainWindow):
             # Cuộn xuống cuối
             self.ui.tableWidget.scrollToBottom()
 
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    viewer = LogViewer()
-    viewer.ui.show()
-    sys.exit(app.exec())
+    def on_reload(self):
+        print("Reloading logs...")

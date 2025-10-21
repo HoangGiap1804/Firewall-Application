@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Frame</class>
+ <widget class="QFrame" name="Frame">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>993</width>
+    <height>449</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Frame</string>
+  </property>
+  <widget class="QTableWidget" name="tableWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>971</width>
+     <height>421</height>
+    </rect>
+   </property>
+   <column>
+    <property name="text">
+     <string>in</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>out</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>mac</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>src</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>dst</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>len</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>tos</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>prec</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>ttl</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>id</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>proto</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>spq</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>dpt</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>len</string>
+    </property>
+   </column>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

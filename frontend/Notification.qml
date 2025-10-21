@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import QtQuick.Controls 2.15
 import Qt.labs.platform 1.1
 import QtQuick.Layouts 1.15
@@ -19,7 +19,15 @@ Column {
         // Header cố định
         Row {
             spacing: 6
-            Rectangle { width: 50; height: 30; color: "lightgray"; border.width: 1; Text { anchors.centerIn: parent; text: "IN" } }
+            Rectangle { 
+                width: 50
+                height: 30
+                radius: 10
+                color: "#d0e6ff"
+                border.color: "#0078d7"
+                border.width: 6
+                Text { anchors.centerIn: parent; text: "IN" } 
+            }
             Rectangle { width: 50; height: 30; color: "lightgray"; border.width: 1; Text { anchors.centerIn: parent; text: "OUT" } }
             Rectangle { width: 300; height: 30; color: "lightgray"; border.width: 1; Text { anchors.centerIn: parent; text: "MAC" } }
             Rectangle { width: 120; height: 30; color: "lightgray"; border.width: 1; Text { anchors.centerIn: parent; text: "SRC" } }

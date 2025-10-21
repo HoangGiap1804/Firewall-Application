@@ -10,20 +10,37 @@ ApplicationWindow {
     visible: true
     title: "IPTables Log Monitor"
 
+    header: MenuBar {
+        Menu {
+            title: "File"
+            MenuItem { text: "New" }
+            MenuItem { text: "Open" }
+            MenuSeparator {}
+            MenuItem { text: "Save" }
+            MenuItem { text: "Exit" }
+        }
+        Menu {
+            title: "Edit"
+            MenuItem { text: "Cut" }
+            MenuItem { text: "Copy" }
+            MenuItem { text: "Paste" }
+        }
+    }
+
     Column {
         anchors.fill: parent
         spacing: 20
         Row{
             id: header
             spacing: 10
-            Button {
+            ButtonPage {
                 text: "Back to Page 1"
                 onClicked: {
                     stackView.pop()
                     stackView.push(page1)
                 }
             }
-            Button {
+            ButtonPage {
                 text: "Go to Page 2"
                 onClicked: {
                     stackView.pop()
@@ -31,7 +48,7 @@ ApplicationWindow {
                 }
             }
 
-            Button {
+            ButtonPage {
                 text: "Go to Page 3"
                 onClicked: {
                     stackView.pop()
@@ -39,7 +56,7 @@ ApplicationWindow {
                 }
             }
 
-            Button {
+            ButtonPage {
                 text: "Go to Page 4"
                 onClicked: {
                     stackView.pop()
@@ -47,21 +64,21 @@ ApplicationWindow {
                 }
             }
 
-            Button {
+            ButtonPage {
                 text: "Go to Page 5"
                 onClicked: {
                     stackView.pop()
                     stackView.push(page5)
                 }
             }
-            Button {
+            ButtonPage {
                 text: "Firewall Controller"
                 onClicked: {
                     stackView.pop()
                     stackView.push(page6)
                 }
             }
-            Button {
+            ButtonPage {
                 text: "Available Rules"
                 onClicked: {
                     stackView.pop()
