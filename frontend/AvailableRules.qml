@@ -54,7 +54,7 @@ Page {
 
                         Switch {
                             id: toggle
-                            checked: rulesStatus[modelData]
+                            checked: rulesStatus[modelData].enabled
                             Layout.alignment: Qt.AlignVCenter
                             onToggled: {
                                 var result = availableRules.toggleRule(modelData, checked)
@@ -64,7 +64,7 @@ Page {
                                 } catch(e) {
                                     console.log("Notification unavailable:", e)
                                 }
-                                rulesStatus[modelData] = checked
+                                rulesStatus[modelData].enabled = checked
                                 rulesList.model = Object.keys(rulesStatus)
                             }
                         }
@@ -82,7 +82,7 @@ Page {
     Connections {
         target: availableRules
         onRuleToggled: function(ruleName, enabled) {
-            rulesStatus[ruleName] = enabled
+            rulesStatus[ruleName].enabled = enabled
             rulesList.model = Object.keys(rulesStatus)
         }
     }

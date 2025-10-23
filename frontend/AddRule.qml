@@ -11,6 +11,7 @@ Column {
         ComboBox { id: actionBox; width: 300; model: ["ACCEPT", "DROP", "REJECT"] }
         TextField { id: interfaceField; width: 300; placeholderText: "Interface (optional)" }
         TextField { id: stateField; width: 300; placeholderText: "State (NEW, ESTABLISHED) optional" }
+        TextField { id: groupField; width: 300; placeholderText: "Group (optional)"}
 
         Button {
             text: "Add Rule"
@@ -21,7 +22,8 @@ Column {
                     protocolBox.currentText,
                     actionBox.currentText,
                     interfaceField.text,
-                    stateField.text
+                    stateField.text,
+                    groupField.text
                 )
             }
         }
