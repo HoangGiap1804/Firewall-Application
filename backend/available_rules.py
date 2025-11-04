@@ -42,7 +42,11 @@ def normalize_rule_key(key: str) -> str:
 
     target = parts[0]
     prot = parts[1]
-    prot = PROTOCOL_MAP.get(prot)
+    # Nếu prot đã là số thì giữ nguyên, nếu là tên thì convert
+    if prot.isdigit():
+        prot_num = prot
+    else:
+        prot_num = PROTOCOL_MAP.get(prot, prot)
     opt = "--"
     in_if = "*"
     out_if = "*"
@@ -58,7 +62,7 @@ def normalize_rule_key(key: str) -> str:
             dest = parts[idx + 2]
 
     # Đảm bảo đúng thứ tự 7 phần tử
-    norm_key = f"{target} {prot} {opt} {in_if} {out_if} {src} {dest}"
+    norm_key = f"{target} {prot_num} {opt} {in_if} {out_if} {src} {dest}"
     return norm_key.strip()
 
 def load_meta():
