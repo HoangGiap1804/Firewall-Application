@@ -7,7 +7,69 @@ from PySide6.QtCore import QObject, Slot, Signal
 
 STATUS_FILE = "available_rules.json"
 SYSCTL_BACKUP_FILE = "sysctl_backup.json"
+META_FILE = "rules_meta.json"
 
+PROTOCOL_MAP = {
+    "icmp": "1",
+    "tcp": "6",
+    "udp": "17"
+}
+
+def make_rule_key_from_cmd(cmd):
+    """
+    Chuẩn hóa key dạng rút gọn: <TARGET> <PROT_NUM> -- <SRC> <DEST>
+    Bỏ qua toàn bộ phần extras như --dport, --icmp-type, -m ...
+    """
+    try:
+        target = cmd[cmd.index("-j") + 1] if "-j" in cmd else "ACCEPT"
+        prot = cmd[cmd.index("-p") + 1] if "-p" in cmd else "*"
+        prot_num = PROTOCOL_MAP.get(prot, prot)
+        source = cmd[cmd.index("-s") + 1] if "-s" in cmd else "*"
+        dest = cmd[cmd.index("-d") + 1] if "-d" in cmd else "0.0.0.0/0"
+        key = f"{target} {prot_num} -- {source} {dest}"
+        return key.strip()
+    except Exception:
+        return f"ERR_KEY_PARSE_{' '.join(cmd)}"
+
+def normalize_rule_key(key: str) -> str:
+    """
+    Chuẩn hóa key rule để trùng định dạng với rule_input.py:
+    <TARGET> <PROT> -- <IN> <OUT> <SRC> <DEST>
+    """
+    parts = key.split()
+    if len(parts) < 3:
+        return key.strip()
+
+    target = parts[0]
+    prot = parts[1]
+    prot = PROTOCOL_MAP.get(prot)
+    opt = "--"
+    in_if = "*"
+    out_if = "*"
+
+    # Lấy source và dest
+    src = "0.0.0.0/0"
+    dest = "0.0.0.0/0"
+    if "--" in parts:
+        idx = parts.index("--")
+        if len(parts) > idx + 1:
+            src = parts[idx + 1]
+        if len(parts) > idx + 2:
+            dest = parts[idx + 2]
+
+    # Đảm bảo đúng thứ tự 7 phần tử
+    norm_key = f"{target} {prot} {opt} {in_if} {out_if} {src} {dest}"
+    return norm_key.strip()
+
+def load_meta():
+    if os.path.exists(META_FILE):
+        with open(META_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_meta(meta):
+    with open(META_FILE, "w") as f:
+        json.dump(meta, f, indent=4)
 
 def run_cmd(cmd: List[str]):
     try:
@@ -21,94 +83,148 @@ def run_cmd(cmd: List[str]):
         return _E()
 
 def get_sysctl(param: str) -> str:
-    """Lấy giá trị sysctl hiện tại"""
     res = subprocess.run(["sysctl", "-n", param], capture_output=True, text=True)
     return res.stdout.strip() if res.returncode == 0 else None
 
-
 def set_sysctl(param: str, value: str):
-    """Set sysctl (dùng sudo)"""
     subprocess.run(["sudo", "sysctl", f"{param}={value}"], capture_output=True, text=True)
 
 
 class AvailableRules(QObject):
-    ruleToggled = Signal(str, bool)  # group_name, enabled
+    ruleToggled = Signal(str, bool)
 
-    # Các nhóm luật đã nâng cấp
     RULE_GROUPS = {
-        # Giới hạn ICMP theo từng IP (hashlimit) + drop còn lại + log giới hạn
-        "ICMP Flood": [
-            ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
-             "-m", "hashlimit", "--hashlimit-name", "icmp_flood", "--hashlimit", "5/sec",
-             "--hashlimit-burst", "10", "--hashlimit-mode", "srcip", "-j", "ACCEPT"],
-            ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
-             "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "ICMP_FLOOD: "],
-            ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request", "-j", "DROP"],
-        ],
+        "ICMP Flood": {
+            "group": "ICMP Flood",
+            "rules": [
+                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
+                 "-m", "hashlimit", "--hashlimit-name", "icmp_flood", "--hashlimit", "5/sec",
+                 "--hashlimit-burst", "10", "--hashlimit-mode", "srcip", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
+                 "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "ICMP_FLOOD: "],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request", "-j", "DROP"],
+            ]
+        },
+        "SYN Flood": {
+            "group": "SYN Flood",
+            "rules": [
+                ["sudo", "iptables", "-N", "SYN_PROTECT"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "SYN_PROTECT"],
+                ["sudo", "iptables", "-A", "SYN_PROTECT", "-m", "hashlimit",
+                 "--hashlimit-name", "synflood", "--hashlimit-above", "10/sec",
+                 "--hashlimit-burst", "20", "--hashlimit-mode", "srcip",
+                 "--hashlimit-htable-expire", "300000", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "SYN_PROTECT", "-j", "RETURN"],
+            ]
+        },
+        "Port Scan": {
+            "group": "Port Scan",
+            "rules": [
+                ["sudo", "iptables", "-N", "PORT_SCAN"],
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-m", "limit", "--limit", "2/min",
+                 "-j", "LOG", "--log-prefix", "PORTSCAN: "],
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "PORT_SCAN"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "ALL", "-j", "PORT_SCAN"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "FIN,URG,PSH", "-j", "PORT_SCAN"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN,RST", "-j", "PORT_SCAN"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,FIN", "SYN,FIN", "-j", "PORT_SCAN"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "udp", "-m", "length", "--length", "0:28", "-j", "DROP"],
+            ]
+        },
+        "IP Spoofing": {
+            "group": "IP Spoofing",
+            "rules": [
+                ["sudo", "iptables", "-A", "INPUT", "-s", "10.0.0.0/8", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-s", "172.16.0.0/12", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-s", "192.168.0.0/16", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-s", "127.0.0.0/8", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-s", "169.254.0.0/16", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-s", "224.0.0.0/4", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-s", "240.0.0.0/5", "-j", "DROP"],
+            ]
+        },
+        "Invalid Packet": {
+            "group": "Invalid Packet",
+            "rules": [
+                ["sudo", "iptables", "-A", "INPUT", "-m", "conntrack", "--ctstate", "INVALID",
+                 "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "INVALID_PKT: "],
+                ["sudo", "iptables", "-A", "INPUT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "DROP"],
+            ]
+        },
+        "Broadcast Control": {
+            "group": "Broadcast Control",
+            "rules": [
+                ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast",
+                 "-m", "limit", "--limit", "10/s", "--limit-burst", "20", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast",
+                 "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "BROADCAST_PKT: "],
+                ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast", "-j", "DROP"],
+            ]
+        },
+        "Outbound Protection": {
+            "group": "Outbound Protection",
+            "rules": [
+                ["sudo", "iptables", "-A", "OUTPUT", "-s", "10.0.0.0/8", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "OUTPUT", "-s", "172.16.0.0/12", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "OUTPUT", "-s", "192.168.0.0/16", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "OUTPUT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "DROP"],
+            ]
+        },
+        "FIN/XMAS/NULL Scan": {
+            "group": "FIN/XMAS/NULL Scan",
+            "rules": [
+                # FIN scan
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN", "-m", "limit", "--limit", "2/min",
+                "-j", "LOG", "--log-prefix", "FIN_SCAN: ", "--log-level", "4"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN", "-j", "DROP"],
 
-        # SYN Flood: chain riêng + hashlimit theo srcip + RETURN cho hợp lí
-        "SYN Flood": [
-            ["sudo", "iptables", "-N", "SYN_PROTECT"],
-            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "SYN_PROTECT"],
-            ["sudo", "iptables", "-A", "SYN_PROTECT", "-m", "hashlimit",
-             "--hashlimit-name", "synflood", "--hashlimit-above", "10/sec",
-             "--hashlimit-burst", "20", "--hashlimit-mode", "srcip",
-             "--hashlimit-htable-expire", "300000", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "SYN_PROTECT", "-j", "RETURN"],
-        ],
+                # XMAS scan
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "FIN,PSH,URG", "FIN,PSH,URG", "-m", "limit", "--limit", "2/min",
+                "-j", "LOG", "--log-prefix", "XMAS_SCAN: ", "--log-level", "4"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "FIN,PSH,URG", "FIN,PSH,URG", "-j", "DROP"],
 
-        # Port scan: chain riêng, nhiều flag detect, log giới hạn
-        "Port Scan": [
-            ["sudo", "iptables", "-N", "PORT_SCAN"],
-            ["sudo", "iptables", "-A", "PORT_SCAN", "-m", "limit", "--limit", "2/min",
-             "-j", "LOG", "--log-prefix", "PORTSCAN: "],
-            ["sudo", "iptables", "-A", "PORT_SCAN", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "PORT_SCAN"],
-            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "ALL", "-j", "PORT_SCAN"],
-            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "FIN,URG,PSH", "-j", "PORT_SCAN"],
-            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN,RST", "-j", "PORT_SCAN"],
-            ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,FIN", "SYN,FIN", "-j", "PORT_SCAN"],
-            # optional: small UDP scan mitigation
-            ["sudo", "iptables", "-A", "INPUT", "-p", "udp", "-m", "length", "--length", "0:28", "-j", "DROP"],
-        ],
+                # NULL scan
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-m", "limit", "--limit", "2/min",
+                "-j", "LOG", "--log-prefix", "NULL_SCAN: ", "--log-level", "4"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "DROP"],
 
-        # IP spoofing: chặn thêm multicast, link-local, reserved
-        "IP Spoofing": [
-            ["sudo", "iptables", "-A", "INPUT", "-s", "10.0.0.0/8", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "INPUT", "-s", "172.16.0.0/12", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "INPUT", "-s", "192.168.0.0/16", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "INPUT", "-s", "127.0.0.0/8", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "INPUT", "-s", "169.254.0.0/16", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "INPUT", "-s", "224.0.0.0/4", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "INPUT", "-s", "240.0.0.0/5", "-j", "DROP"],
-        ],
+                # Tạo chain FIN_PROTECT
+                ["sudo", "iptables", "-N", "FIN_PROTECT"],
+                ["sudo", "iptables", "-A", "FIN_PROTECT", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN",
+                "-m", "recent", "--name", "FIN_SCAN", "--set", "--rsource",
+                "-j", "LOG", "--log-prefix", "FIN_SET: "],
+                ["sudo", "iptables", "-A", "FIN_PROTECT", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN",
+                "-m", "recent", "--name", "FIN_SCAN", "--rcheck", "--seconds", "60", "--hitcount", "5", "--rsource", "-j", "DROP"],
+                ["sudo", "iptables", "-I", "INPUT", "-j", "FIN_PROTECT"],
+            ]
+        },
+        "SSH/FTP Brute Force": {
+            "group": "SSH/FTP Brute Force",
+            "rules": [
+                # SSH brute force
+                ["sudo", "iptables", "-N", "SSH_PROTECT"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "22", "-m", "conntrack", "--ctstate", "NEW",
+                "-m", "recent", "--name", "SSH_BRUTE", "--update", "--seconds", "60", "--hitcount", "5", "--rttl", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "22", "-m", "conntrack", "--ctstate", "NEW",
+                "-m", "recent", "--name", "SSH_BRUTE", "--set", "-j", "ACCEPT"],
 
-        # Invalid packet: dùng conntrack, log giới hạn rồi drop
-        "Invalid Packet": [
-            ["sudo", "iptables", "-A", "INPUT", "-m", "conntrack", "--ctstate", "INVALID",
-             "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "INVALID_PKT: "],
-            ["sudo", "iptables", "-A", "INPUT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "DROP"],
-        ],
+                # FTP brute force
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "21", "-m", "conntrack", "--ctstate", "NEW",
+                "-m", "recent", "--name", "FTP_BRUTE", "--update", "--seconds", "60", "--hitcount", "10", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "21", "-m", "conntrack", "--ctstate", "NEW",
+                "-m", "recent", "--name", "FTP_BRUTE", "--set", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "50000:51000", "-m", "conntrack", "--ctstate", "NEW", "-j", "ACCEPT"],
 
-        # Broadcast control: limit + log
-        "Broadcast Control": [
-            ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast",
-             "-m", "limit", "--limit", "10/s", "--limit-burst", "20", "-j", "ACCEPT"],
-            ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast",
-             "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "BROADCAST_PKT: "],
-            ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast", "-j", "DROP"],
-        ],
-
-        # Outbound protection: ngăn outbound spoof / invalid
-        "Outbound Protection": [
-            ["sudo", "iptables", "-A", "OUTPUT", "-s", "10.0.0.0/8", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "OUTPUT", "-s", "172.16.0.0/12", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "OUTPUT", "-s", "192.168.0.0/16", "-j", "DROP"],
-            ["sudo", "iptables", "-A", "OUTPUT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "DROP"],
-        ],
+                # Cho phép các dịch vụ cơ bản
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "80", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "443", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "udp", "--dport", "53", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "53", "-j", "ACCEPT"],
+            ]
+        },
     }
 
-    # sysctl params cần backup cho SYN Flood
     SYSCTL_PARAMS = [
         "net.ipv4.tcp_syncookies",
         "net.ipv4.tcp_max_syn_backlog",
@@ -125,7 +241,7 @@ class AvailableRules(QObject):
         if os.path.exists(STATUS_FILE):
             with open(STATUS_FILE, "r") as f:
                 return json.load(f)
-        return {k: False for k in self.RULE_GROUPS}
+        return {k: {"enabled": False, "group": self.RULE_GROUPS[k]["group"]} for k in self.RULE_GROUPS}
 
     def _save_status(self):
         with open(STATUS_FILE, "w") as f:
@@ -143,75 +259,77 @@ class AvailableRules(QObject):
 
     @Slot(result='QVariant')
     def getStatus(self):
-        """Trả về trạng thái bật/tắt hiện tại."""
+        """Trả về trạng thái và group của từng rule."""
         return self.status
 
     @Slot(str, bool, result=str)
     def toggleRule(self, group_name: str, enable: bool) -> str:
-        """Bật/tắt nhóm luật. Có xử lý sysctl cho SYN Flood và rollback."""
         if group_name not in self.RULE_GROUPS:
             return f"Unknown rule group: {group_name}"
 
-        cmds = self.RULE_GROUPS[group_name]
+        cmds = self.RULE_GROUPS[group_name]["rules"]
+        group_meta = self.RULE_GROUPS[group_name]["group"]
         logs = []
 
-        # --- Thêm hoặc xóa iptables ---
+        meta = load_meta()
+
         if enable:
             for cmd in cmds:
                 res = run_cmd(cmd)
                 logs.append(f"ADD: {' '.join(cmd)} => {res.returncode}")
-            self.status[group_name] = True
+                if res.returncode == 0:
+                    # Ghi thẳng vào rules_meta.json
+                    rule_key = make_rule_key_from_cmd(cmd)
+                    norm_key = normalize_rule_key(rule_key)
+                    meta[norm_key] = group_meta
+
+            self.status[group_name] = {"enabled": True, "group": group_meta}
+
         else:
-            # Xóa: với -A/-I -> thay bằng -D; với -N -> flush & delete chain
             for cmd in cmds:
                 if "-A" in cmd or "-I" in cmd:
-                    # đổi -A/-I thành -D
                     cmd_del = cmd.copy()
-                    if "-A" in cmd_del:
-                        idx = cmd_del.index("-A")
-                    else:
-                        idx = cmd_del.index("-I")
-                    cmd_del[idx] = "-D"
+                    cmd_del[cmd_del.index("-A") if "-A" in cmd_del else cmd_del.index("-I")] = "-D"
                     res = run_cmd(cmd_del)
                     logs.append(f"DEL: {' '.join(cmd_del)} => {res.returncode}")
                 elif "-N" in cmd:
-                    # nếu tạo chain: flush & delete chain
                     try:
-                        idx = cmd.index("-N")
-                        chain = cmd[idx + 1]
-                        resf = run_cmd(["sudo", "iptables", "-F", chain])
-                        resx = run_cmd(["sudo", "iptables", "-X", chain])
-                        logs.append(f"FLUSH {chain} => {resf.returncode}; DELETE {chain} => {resx.returncode}")
+                        chain = cmd[cmd.index("-N") + 1]
+                        run_cmd(["sudo", "iptables", "-F", chain])
+                        run_cmd(["sudo", "iptables", "-X", chain])
+                        logs.append(f"FLUSH/DELETE {chain}")
                     except Exception as e:
-                        logs.append(f"ERR deleting chain: {str(e)}")
-            self.status[group_name] = False
+                        logs.append(f"ERR deleting chain: {e}")
 
-        # --- Xử lý sysctl cho SYN Flood ---
+                # Xóa rule_key tương ứng trong meta
+                rule_key = make_rule_key_from_cmd(cmd)
+                norm_key = normalize_rule_key(rule_key)
+                if norm_key in meta:
+                    del meta[norm_key]
+
+            self.status[group_name] = {"enabled": False, "group": group_meta}
+
+        save_meta(meta)
+
+        # --- Quản lý sysctl cho SYN Flood ---
         if group_name == "SYN Flood":
             if enable:
-                # backup sysctl trước khi thay đổi
                 for p in self.SYSCTL_PARAMS:
                     v = get_sysctl(p)
-                    if v is not None:
+                    if v:
                         self.sysctl_backup[p] = v
                 self._save_sysctl_backup()
-                # áp dụng giá trị bảo vệ
                 set_sysctl("net.ipv4.tcp_syncookies", "1")
                 set_sysctl("net.ipv4.tcp_max_syn_backlog", "2048")
                 set_sysctl("net.ipv4.tcp_synack_retries", "3")
                 set_sysctl("net.ipv4.tcp_abort_on_overflow", "1")
                 logs.append("SYSCTL: applied SYN protections")
             else:
-                # khôi phục sysctl đã backup
                 for p, v in self.sysctl_backup.items():
-                    if v is not None:
+                    if v:
                         set_sysctl(p, v)
                         logs.append(f"SYSCTL: restored {p}={v}")
-                # optional: clear backup
-                # self.sysctl_backup = {}
-                # self._save_sysctl_backup()
 
         self._save_status()
-        self._save_sysctl_backup()
         self.ruleToggled.emit(group_name, enable)
         return "\n".join(logs)

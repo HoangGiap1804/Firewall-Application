@@ -3,3 +3,4 @@ QtWidgets
 uic
 PyQt6
 python-dotenv
+psutil
