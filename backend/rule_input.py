@@ -19,19 +19,15 @@ def normalize_rule_key(rule_key: str) -> str:
     
     Input: rule_key từ iptables output (format: target prot opt in out source destination ...)
     Output: normalized key (format: target prot_num -- in out source destination)
+    
+    Logic này phải match chính xác với normalize_rule_key() trong available_rules.py
     """
     parts = rule_key.split()
-    if len(parts) < 7:
+    if len(parts) < 3:
         return rule_key.strip()
     
-    # Lấy 7 phần tử đầu: target, prot, opt, in, out, source, destination
     target = parts[0]
     prot = parts[1]
-    opt = parts[2] if len(parts) > 2 else "--"
-    in_if = parts[3] if len(parts) > 3 else "*"
-    out_if = parts[4] if len(parts) > 4 else "*"
-    source = parts[5] if len(parts) > 5 else "0.0.0.0/0"
-    dest = parts[6] if len(parts) > 6 else "0.0.0.0/0"
     
     # Chuyển protocol name thành number (icmp -> 1, tcp -> 6, udp -> 17)
     # Nếu đã là số thì giữ nguyên
@@ -40,9 +36,41 @@ def normalize_rule_key(rule_key: str) -> str:
     else:
         prot_num = PROTOCOL_MAP.get(prot.lower(), prot)
     
+    opt = "--"
+    in_if = "*"
+    out_if = "*"
+    
+    # Parse source và dest
+    # Format từ iptables output: target prot opt in out source destination ...
+    # opt thường là "--", nếu có "--" thì tìm nó, nếu không thì lấy từ vị trí cố định
+    source = "0.0.0.0/0"
+    dest = "0.0.0.0/0"
+    
+    if "--" in parts:
+        # Format: target prot -- in out source destination
+        idx = parts.index("--")
+        # Phần tử sau "--" là: in, out, source, destination
+        if len(parts) > idx + 1:
+            in_if = parts[idx + 1]
+        if len(parts) > idx + 2:
+            out_if = parts[idx + 2]
+        if len(parts) > idx + 3:
+            source = parts[idx + 3]
+        if len(parts) > idx + 4:
+            dest = parts[idx + 4]
+    else:
+        # Format: target prot opt in out source destination (không có "--")
+        # Lấy từ vị trí cố định
+        if len(parts) >= 7:
+            in_if = parts[3] if len(parts) > 3 else "*"
+            out_if = parts[4] if len(parts) > 4 else "*"
+            source = parts[5] if len(parts) > 5 else "0.0.0.0/0"
+            dest = parts[6] if len(parts) > 6 else "0.0.0.0/0"
+    
     # Tạo normalized key với format: target prot_num -- in out source dest
-    # Match với format trong available_rules.py normalize_rule_key()
-    norm_key = f"{target} {prot_num} -- {in_if} {out_if} {source} {dest}"
+    # Match chính xác với format trong available_rules.py normalize_rule_key()
+    # Lưu ý: source và dest giữ nguyên "*" hoặc "0.0.0.0/0" tùy theo input
+    norm_key = f"{target} {prot_num} {opt} {in_if} {out_if} {source} {dest}"
     return norm_key.strip()
 
 
@@ -134,9 +162,34 @@ class IptablesModel(QAbstractListModel):
             key = rule["rule_key"]
             # Normalize key để match với format trong rules_meta.json
             norm_key = normalize_rule_key(key)
-            # Thử lookup với normalized key trước, nếu không có thì thử với key gốc
-            group = self.group_map.get(norm_key, self.group_map.get(key, "None"))
-            return group
+            
+            # Thử lookup với normalized key trước
+            group = self.group_map.get(norm_key)
+            if group:
+                return group
+            
+            # Thử với key gốc
+            group = self.group_map.get(key)
+            if group:
+                return group
+            
+            # Thử với các biến thể của source/dest (* vs 0.0.0.0/0)
+            # Vì available_rules.py có thể dùng "*" cho source, nhưng iptables output dùng "0.0.0.0/0"
+            parts = norm_key.split()
+            if len(parts) >= 7:
+                # Thử thay source "*" thành "0.0.0.0/0" và ngược lại
+                if parts[5] == "*":
+                    alt_key = f"{parts[0]} {parts[1]} {parts[2]} {parts[3]} {parts[4]} 0.0.0.0/0 {parts[6]}"
+                    group = self.group_map.get(alt_key)
+                    if group:
+                        return group
+                elif parts[5] == "0.0.0.0/0":
+                    alt_key = f"{parts[0]} {parts[1]} {parts[2]} {parts[3]} {parts[4]} * {parts[6]}"
+                    group = self.group_map.get(alt_key)
+                    if group:
+                        return group
+            
+            return "None"
         if role in role_map:
             return rule[role_map[role]]
         return None
