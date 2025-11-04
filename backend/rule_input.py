@@ -5,6 +5,46 @@ from PyQt6.QtCore import QAbstractListModel, Qt, QModelIndex, QTimer, pyqtSlot
 
 META_FILE = "rules_meta.json"
 
+PROTOCOL_MAP = {
+    "icmp": "1",
+    "tcp": "6",
+    "udp": "17"
+}
+
+
+def normalize_rule_key(rule_key: str) -> str:
+    """
+    Chuẩn hóa key rule để trùng định dạng với available_rules.py:
+    <TARGET> <PROT_NUM> -- <IN> <OUT> <SRC> <DEST>
+    
+    Input: rule_key từ iptables output (format: target prot opt in out source destination ...)
+    Output: normalized key (format: target prot_num -- in out source destination)
+    """
+    parts = rule_key.split()
+    if len(parts) < 7:
+        return rule_key.strip()
+    
+    # Lấy 7 phần tử đầu: target, prot, opt, in, out, source, destination
+    target = parts[0]
+    prot = parts[1]
+    opt = parts[2] if len(parts) > 2 else "--"
+    in_if = parts[3] if len(parts) > 3 else "*"
+    out_if = parts[4] if len(parts) > 4 else "*"
+    source = parts[5] if len(parts) > 5 else "0.0.0.0/0"
+    dest = parts[6] if len(parts) > 6 else "0.0.0.0/0"
+    
+    # Chuyển protocol name thành number (icmp -> 1, tcp -> 6, udp -> 17)
+    # Nếu đã là số thì giữ nguyên
+    if prot.isdigit():
+        prot_num = prot
+    else:
+        prot_num = PROTOCOL_MAP.get(prot.lower(), prot)
+    
+    # Tạo normalized key với format: target prot_num -- in out source dest
+    # Match với format trong available_rules.py normalize_rule_key()
+    norm_key = f"{target} {prot_num} -- {in_if} {out_if} {source} {dest}"
+    return norm_key.strip()
+
 
 def get_group_map():
     if os.path.exists(META_FILE):
@@ -92,7 +132,11 @@ class IptablesModel(QAbstractListModel):
         }
         if role == self.GroupRole:
             key = rule["rule_key"]
-            return self.group_map.get(key, "None")
+            # Normalize key để match với format trong rules_meta.json
+            norm_key = normalize_rule_key(key)
+            # Thử lookup với normalized key trước, nếu không có thì thử với key gốc
+            group = self.group_map.get(norm_key, self.group_map.get(key, "None"))
+            return group
         if role in role_map:
             return rule[role_map[role]]
         return None
@@ -120,7 +164,7 @@ class IptablesModel(QAbstractListModel):
         if self.filter_group:
             new_rules = [
                 r for r in all_rules
-                if self.group_map.get(r["rule_key"], "None") == self.filter_group
+                if self.group_map.get(normalize_rule_key(r["rule_key"]), self.group_map.get(r["rule_key"], "None")) == self.filter_group
             ]
         else:
             new_rules = all_rules
@@ -163,7 +207,11 @@ class IptablesModel(QAbstractListModel):
             return
 
         all_rules = get_input_rules()
-        rules_to_delete = [r for r in all_rules if r["rule_key"] in keys_to_delete]
+        # Normalize rule_key để match với keys trong meta
+        rules_to_delete = [
+            r for r in all_rules 
+            if normalize_rule_key(r["rule_key"]) in keys_to_delete or r["rule_key"] in keys_to_delete
+        ]
 
         for r in sorted(rules_to_delete, key=lambda x: int(x["num"]), reverse=True):
             try:

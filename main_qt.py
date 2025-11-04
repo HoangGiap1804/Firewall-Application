@@ -1,7 +1,7 @@
 from PyQt6 import QtWidgets, uic
 from backend.log_tab import LogTab
 
-from backend.rule_input import IptablesModel, get_input_rules, get_group_map
+from backend.rule_input import IptablesModel, get_input_rules, get_group_map, normalize_rule_key
 
 from backend.add_rule import IptablesHandler
 
@@ -90,8 +90,9 @@ class MainWindow(QtWidgets.QMainWindow):
         table.setHorizontalHeaderLabels(headers)
 
         for row_index, rule in enumerate(rules):
-            # Group filtering
-            group = group_map.get(rule["rule_key"], "None")
+            # Group filtering - normalize key để match với format trong rules_meta.json
+            norm_key = normalize_rule_key(rule["rule_key"])
+            group = group_map.get(norm_key, group_map.get(rule["rule_key"], "None"))
             if filter_text and filter_text not in group.lower():
                 continue
             
