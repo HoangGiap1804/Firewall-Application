@@ -611,7 +611,7 @@ QCheckBox::indicator:checked {
               <item>
                <widget class="QLabel" name="labelSSH_FTP">
                 <property name="text">
-                 <string>Fin/Xmas/Null Scan</string>
+                 <string>SSH/FTP Brute Force</string>
                 </property>
                </widget>
               </item>
@@ -669,7 +669,7 @@ QCheckBox::indicator:checked {
               <item>
                <widget class="QLabel" name="labelFinXmasNullScan">
                 <property name="text">
-                 <string>SSH/FTP Brute Force</string>
+                 <string>Fin/Xmas/Null Scan</string>
                 </property>
                </widget>
               </item>

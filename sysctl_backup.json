@@ -1,1 +1,6 @@
-{}
+{
+    "net.ipv4.tcp_syncookies": "1",
+    "net.ipv4.tcp_max_syn_backlog": "512",
+    "net.ipv4.tcp_synack_retries": "5",
+    "net.ipv4.tcp_abort_on_overflow": "0"
+}

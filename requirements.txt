@@ -4,3 +4,4 @@ uic
 PyQt6
 python-dotenv
 psutil
+notify2

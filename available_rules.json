@@ -1,9 +1,38 @@
 {
-    "ICMP Flood": false,
-    "SYN Flood": false,
-    "Port Scan": false,
-    "IP Spoofing": false,
-    "Invalid Packet": false,
-    "Broadcast Control": false,
-    "Outbound Protection": false
+    "ICMP Flood": {
+        "enabled": false,
+        "group": "ICMP Flood"
+    },
+    "SYN Flood": {
+        "enabled": false,
+        "group": "SYN Flood"
+    },
+    "Port Scan": {
+        "enabled": false,
+        "group": "PORT_SCAN"
+    },
+    "IP Spoofing": {
+        "enabled": false,
+        "group": "IP Spoofing"
+    },
+    "Invalid Packet": {
+        "enabled": false,
+        "group": "Invalid Packet"
+    },
+    "Broadcast Control": {
+        "enabled": false,
+        "group": "Broadcast Control"
+    },
+    "Outbound Protection": {
+        "enabled": false,
+        "group": "Outbound Protection"
+    },
+    "FIN/XMAS/NULL Scan": {
+        "enabled": true,
+        "group": "FIN/XMAS/NULL Scan"
+    },
+    "SSH/FTP Brute Force": {
+        "enabled": false,
+        "group": "SSH/FTP Brute Force"
+    }
 }

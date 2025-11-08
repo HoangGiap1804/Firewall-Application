@@ -102,37 +102,51 @@ class AvailableRules(QObject):
             "group": "ICMP Flood",
             "rules": [
                 ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
-                 "-m", "hashlimit", "--hashlimit-name", "icmp_flood", "--hashlimit", "5/sec",
-                 "--hashlimit-burst", "10", "--hashlimit-mode", "srcip", "-j", "ACCEPT"],
+                "-m", "limit", "--limit", "5/second", "-j", "ACCEPT"],
                 ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
-                 "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "ICMP_FLOOD: "],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request", "-j", "DROP"],
+                "-j", "LOG", "--log-prefix", "PING_FLOOD: "],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
+                "-j", "DROP"]
             ]
         },
         "SYN Flood": {
             "group": "SYN Flood",
             "rules": [
-                ["sudo", "iptables", "-N", "SYN_PROTECT"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "SYN_PROTECT"],
-                ["sudo", "iptables", "-A", "SYN_PROTECT", "-m", "hashlimit",
-                 "--hashlimit-name", "synflood", "--hashlimit-above", "10/sec",
-                 "--hashlimit-burst", "20", "--hashlimit-mode", "srcip",
-                 "--hashlimit-htable-expire", "300000", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "SYN_PROTECT", "-j", "RETURN"],
+                # ["sudo", "iptables", "-N", "SYN_PROTECT"],
+                # ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "SYN_PROTECT"],
+                # ["sudo", "iptables", "-A", "SYN_PROTECT", "-m", "hashlimit",
+                #  "--hashlimit-name", "synflood", "--hashlimit-above", "10/sec",
+                #  "--hashlimit-burst", "20", "--hashlimit-mode", "srcip",
+                #  "--hashlimit-htable-expire", "300000", "-j", "DROP"],
+                # ["sudo", "iptables", "-A", "SYN_PROTECT", "-j", "RETURN"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-m", "limit", "--limit", "10/s", "--limit-burst", "20", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "LOG", "--log-prefix", '"SYN_FLOOD: "'],
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "DROP"]
             ]
         },
         "Port Scan": {
-            "group": "Port Scan",
+            "group": "PORT_SCAN",
             "rules": [
+                # 1️⃣ Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "PORT_SCAN"],
+                ["sudo", "iptables", "-X", "PORT_SCAN"],
                 ["sudo", "iptables", "-N", "PORT_SCAN"],
+
+                # 2️⃣ Log giới hạn 2 lần/phút để tránh log flood
                 ["sudo", "iptables", "-A", "PORT_SCAN", "-m", "limit", "--limit", "2/min",
-                 "-j", "LOG", "--log-prefix", "PORTSCAN: "],
+                "-j", "LOG", "--log-prefix", "PORT_SCAN: ", "--log-level", "4"],
+
+                # 3️⃣ Drop toàn bộ gói bị nghi ngờ
                 ["sudo", "iptables", "-A", "PORT_SCAN", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "PORT_SCAN"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "ALL", "-j", "PORT_SCAN"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "FIN,URG,PSH", "-j", "PORT_SCAN"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN,RST", "-j", "PORT_SCAN"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,FIN", "SYN,FIN", "-j", "PORT_SCAN"],
+
+                # 4️⃣ Gắn các rule phát hiện đặc trưng của Port Scan
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "PORT_SCAN"],          # NULL scan
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "ALL", "-j", "PORT_SCAN"],          # XMAS scan
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "FIN,URG,PSH", "-j", "PORT_SCAN"],  # Xmas variation
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN,RST", "-j", "PORT_SCAN"],  # SYN/RST scan
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,FIN", "SYN,FIN", "-j", "PORT_SCAN"],  # SYN/FIN scan
+
+                # 5️⃣ Chặn gói UDP nghi ngờ (kích thước nhỏ bất thường)
                 ["sudo", "iptables", "-A", "INPUT", "-p", "udp", "-m", "length", "--length", "0:28", "-j", "DROP"],
             ]
         },

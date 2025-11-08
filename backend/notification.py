@@ -1,11 +1,18 @@
-import sys
 import subprocess
-from PySide6.QtCore import QObject, Slot, QUrl
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtCore import QObject, Slot
 
 
-class Notification(QObject):
-    @Slot(str, str)
-    def send(self, title, message):
-        subprocess.run(["notify-send", title, message])
+def send_notification(title: str, message: str):
+     
+    try:
+        subprocess.Popen([
+            "notify-send",
+            "--icon=dialog-warning",      # Có thể đổi thành dialog-information / security-high
+            "--urgency=critical",         # low | normal | critical
+            "--expire-time=60000",         # 60 giây
+            title,
+            message
+        ])
+        print(f"📢 Notification sent: {title} - {message}")
+    except Exception as e:
+        print("❌ Failed to send notification:", e)
