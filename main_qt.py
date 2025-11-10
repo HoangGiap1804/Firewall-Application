@@ -6,6 +6,8 @@ from backend.rule_input import IptablesModel, get_input_rules, get_group_map, no
 from backend.add_rule import IptablesHandler
 
 from backend.available_rules import AvailableRules
+from backend.system_monitor import SystemMonitor
+
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QTableWidgetItem
@@ -22,6 +24,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         ## Rule input Tab
         self.iptables_model = IptablesModel()
+
+        self.monitor = SystemMonitor(self.ui)
         
         # Current filter state (editRules)
         self.current_filter = ""

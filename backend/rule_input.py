@@ -226,7 +226,6 @@ class IptablesModel(QAbstractListModel):
             self.beginResetModel()
             self.rules = new_rules
             self.endResetModel()
-            print("Rules updated.")
 
     @pyqtSlot(str)
     def deleteRule(self, num):
