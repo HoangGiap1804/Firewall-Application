@@ -137,3 +137,114 @@ def send_attack_alert(attack_type: str, src_ip: str, severity: str, log_time: st
         server.send_message(msg)
 
     print(f"📧 Cảnh báo '{attack_type}' đã được gửi tới {RECEIVER_EMAIL}!")
+
+def send_malware_alert(malware_type: str, severity: str, log_time: str | None = None):
+    if log_time is None:
+        log_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Màu severity
+    color = {
+        "low": "#22c55e",
+        "medium": "#eab308",
+        "high": "#ef4444",
+    }.get(severity.lower(), "#eab308")
+
+    html_content = f"""\
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>⚠️ Cảnh báo mã độc</title>
+  <style>
+    body {{
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f6f8fa;
+      margin: 0;
+      padding: 20px;
+    }}
+    .card {{
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }}
+    .header {{
+      background: linear-gradient(90deg, #7f1d1d, #991b1b);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }}
+    .content {{
+      padding: 20px;
+      color: #333;
+      line-height: 1.6;
+    }}
+    .badge {{
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      background: {color};
+      color: white;
+    }}
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }}
+    td {{
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }}
+    .footer {{
+      background: #f9fafb;
+      padding: 10px;
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+    }}
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="header">
+      <h2>⚠️ PHÁT HIỆN MÃ ĐỘC</h2>
+      <p>Hệ thống phát hiện hoạt động đáng ngờ trong sandbox</p>
+    </div>
+
+    <div class="content">
+
+      <table>
+        <tr><td><strong>Loại mã độc:</strong></td><td>{malware_type}</td></tr>
+        <tr><td><strong>Mức độ nguy hiểm:</strong></td><td><span class="badge">{severity.upper()}</span></td></tr>
+        <tr><td><strong>Thời gian:</strong></td><td>{log_time}</td></tr>
+      </table>
+
+      <p style="margin-top:15px;">
+        Hệ thống sandbox phát hiện dấu hiệu nhiễm mã độc.  
+        Vui lòng kiểm tra ngay lập tức để đảm bảo an toàn hệ thống.
+      </p>
+    </div>
+
+    <div class="footer">© 2025 Giap Security Monitor</div>
+  </div>
+</body>
+</html>
+"""
+
+    msg = EmailMessage()
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = RECEIVER_EMAIL
+    msg["Subject"] = f"[{severity.upper()}] Malware detected ({malware_type})"
+    msg.set_content("A malware threat has been detected. Please check the HTML version.")
+    msg.add_alternative(html_content, subtype="html")
+
+    # send mail
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(SENDER_EMAIL, PASSWORD_EMAIL)
+        server.send_message(msg)
+
+    print("📧 Đã gửi email cảnh báo mã độc!")

@@ -3,6 +3,7 @@ import time
 import subprocess
 from PyQt6.QtCore import QObject, QTimer, pyqtSlot
 from PyQt6.QtWidgets import QLabel
+from backend.mailer import send_malware_alert
 import re
 import psutil
 
@@ -26,6 +27,14 @@ class SystemMonitor(QObject):
 
         # Tìm interface veth tương ứng
         self.veth_iface = self.find_veth()
+
+         # --- THÊM ---
+        self.prev_ram = 0
+        self.prev_cpu_percent = 0
+
+        self.RAM_SPIKE_MB = 150        # tăng >150MB coi như đột biến
+        self.CPU_SPIKE_PERCENT = 40    # tăng >40% trong 2 giây
+        self.CPU_MAX_PERCENT = 85      # CPU vượt ngưỡng nguy hiểm
 
     # =======================
     # === Update toàn bộ ===
@@ -57,6 +66,19 @@ class SystemMonitor(QObject):
 
             used_mb = used_bytes / (1024 ** 2)
             percent = used_bytes / total_bytes * 100
+
+
+            if self.prev_ram > 0:
+                diff_mb = (used_bytes - self.prev_ram) / (1024 ** 2)
+                if diff_mb > self.RAM_SPIKE_MB:
+                    self.show_alert(f"RAM tăng đột biến: +{diff_mb:.1f} MB")
+                    send_malware_alert(
+                        malware_type="Trojan.Generic",
+                        severity="high"
+                    )
+
+
+            self.prev_ram = used_bytes
 
             label = self.ui.findChild(QLabel, "label_ram")
             if label:
@@ -194,6 +216,8 @@ class SystemMonitor(QObject):
     # =======================
     # === Services ===
     # =======================
+    last_service_alert_time = 0
+    SERVICE_ALERT_COOLDOWN = 60
     def update_services(self):
         try:
             # Liệt kê dịch vụ đang chạy trong container
@@ -204,8 +228,23 @@ class SystemMonitor(QObject):
             running = len([l for l in result.stdout.splitlines() if ".service" in l])
 
             label = self.ui.findChild(QLabel, "label_service")
+
+            now = time.time()
+            if running > 10:
+                if now - self.last_service_alert_time >= self.SERVICE_ALERT_COOLDOWN:
+                    self.show_alert("Service lạ phát hiện")
+                    self.last_service_alert_time = now  # cập nhật lại thời điểm gửi cảnh báo
+                    send_malware_alert(
+                        malware_type="Service",
+                        severity="high"
+                    )
+
             if label:
                 label.setText(f"{running} đang chạy")
 
         except Exception as e:
             print("❌ Service error:", e)
+
+    def show_alert(self, message):
+        print("CẢNH BÁO BẢO MẬT")
+        print(message)
