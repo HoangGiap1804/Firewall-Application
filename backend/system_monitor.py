@@ -31,6 +31,10 @@ class SystemMonitor(QObject):
          # --- THÊM ---
         self.prev_ram = 0
         self.prev_cpu_percent = 0
+        
+        # Giá trị hiện tại để chart có thể truy cập
+        self.current_cpu_percent = 0
+        self.current_ram_percent = 0
 
         self.RAM_SPIKE_MB = 150        # tăng >150MB coi như đột biến
         self.CPU_SPIKE_PERCENT = 40    # tăng >40% trong 2 giây
@@ -66,7 +70,9 @@ class SystemMonitor(QObject):
 
             used_mb = used_bytes / (1024 ** 2)
             percent = used_bytes / total_bytes * 100
-
+            
+            # Lưu giá trị để chart có thể truy cập
+            self.current_ram_percent = percent
 
             if self.prev_ram > 0:
                 diff_mb = (used_bytes - self.prev_ram) / (1024 ** 2)
@@ -105,6 +111,9 @@ class SystemMonitor(QObject):
             delta_usage = usage_usec - self.prev_cpu_usage
 
             cpu_percent = (delta_usage / 1e6) / delta_time * 100 / os.cpu_count()
+            
+            # Lưu giá trị để chart có thể truy cập
+            self.current_cpu_percent = cpu_percent
 
             self.prev_cpu_usage = usage_usec
             self.prev_time = now

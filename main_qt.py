@@ -7,6 +7,7 @@ from backend.add_rule import IptablesHandler
 
 from backend.available_rules import AvailableRules
 from backend.system_monitor import SystemMonitor
+from backend.chart_manager import setup_charts
 
 
 from PyQt6.QtCore import QTimer
@@ -26,6 +27,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.iptables_model = IptablesModel()
 
         self.monitor = SystemMonitor(self.ui)
+        
+        # Setup charts (tự động tạo và hiển thị)
+        self.charts_manager = setup_charts(self.ui, self.monitor)
         
         # Current filter state (editRules)
         self.current_filter = ""
@@ -247,6 +251,7 @@ class MainWindow(QtWidgets.QMainWindow):
             checkbox.blockSignals(True)
             checkbox.setChecked(enabled)
             checkbox.blockSignals(False)
+    
         
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

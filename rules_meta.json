@@ -2,7 +2,5 @@
     "ACCEPT None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
     "LOG None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
     "DROP None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
-    "FIN_PROTECT None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
-    "LOG 6 -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
-    "FIN_PROTECT * -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan"
+    "FIN_PROTECT None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan"
 }
