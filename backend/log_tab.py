@@ -73,6 +73,15 @@ class LogTab(QtWidgets.QWidget):
                 # ❌ Bỏ qua log từ IP đã bị chặn
                 continue
             
+            # Kiểm tra xem có đang ở gần cuối bảng không
+            scroll_bar = self.tableWidget.verticalScrollBar()
+            is_near_bottom = False
+            if scroll_bar:
+                max_scroll = scroll_bar.maximum()
+                current_scroll = scroll_bar.value()
+                # Nếu đang ở trong vòng 10 pixels từ cuối, coi như đang ở cuối
+                is_near_bottom = (max_scroll - current_scroll) <= 10
+            
             # Thêm dòng vào bảng hiển thị
             row = self.tableWidget.rowCount()
             self.tableWidget.insertRow(row)
@@ -124,4 +133,7 @@ class LogTab(QtWidgets.QWidget):
                 item = QTableWidgetItem(fields[k])
                 item.setBackground(bg)
                 self.tableWidget.setItem(row, c, item)
-            self.tableWidget.scrollToBottom()
+            
+            # Chỉ tự động cuộn xuống nếu đang ở gần cuối bảng
+            if is_near_bottom:
+                self.tableWidget.scrollToBottom()
