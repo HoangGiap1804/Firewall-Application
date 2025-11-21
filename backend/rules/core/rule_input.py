@@ -105,7 +105,8 @@ def get_input_rules():
                 "out": parts[7],
                 "source": parts[8],
                 "destination": parts[9],
-                "rule_key": rule_key
+                "rule_key": rule_key,
+                "chain": "INPUT"  # Chain mà rule thuộc về
             }
             rules.append(rule)
         return rules
@@ -127,13 +128,12 @@ class IptablesModel(QAbstractListModel):
     OutRole = Qt.ItemDataRole.UserRole + 8
     SourceRole = Qt.ItemDataRole.UserRole + 9
     DestinationRole = Qt.ItemDataRole.UserRole + 10
-    GroupRole = Qt.ItemDataRole.UserRole + 11
+    ChainRole = Qt.ItemDataRole.UserRole + 11
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.rules = get_input_rules()
-        self.group_map = get_group_map()
-        self.filter_group = ""
+        self.filter_chain = ""
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refreshRules)
@@ -158,38 +158,9 @@ class IptablesModel(QAbstractListModel):
             self.SourceRole: "source",
             self.DestinationRole: "destination"
         }
-        if role == self.GroupRole:
-            key = rule["rule_key"]
-            # Normalize key để match với format trong rules_meta.json
-            norm_key = normalize_rule_key(key)
-            
-            # Thử lookup với normalized key trước
-            group = self.group_map.get(norm_key)
-            if group:
-                return group
-            
-            # Thử với key gốc
-            group = self.group_map.get(key)
-            if group:
-                return group
-            
-            # Thử với các biến thể của source/dest (* vs 0.0.0.0/0)
-            # Vì available_rules.py có thể dùng "*" cho source, nhưng iptables output dùng "0.0.0.0/0"
-            parts = norm_key.split()
-            if len(parts) >= 7:
-                # Thử thay source "*" thành "0.0.0.0/0" và ngược lại
-                if parts[5] == "*":
-                    alt_key = f"{parts[0]} {parts[1]} {parts[2]} {parts[3]} {parts[4]} 0.0.0.0/0 {parts[6]}"
-                    group = self.group_map.get(alt_key)
-                    if group:
-                        return group
-                elif parts[5] == "0.0.0.0/0":
-                    alt_key = f"{parts[0]} {parts[1]} {parts[2]} {parts[3]} {parts[4]} * {parts[6]}"
-                    group = self.group_map.get(alt_key)
-                    if group:
-                        return group
-            
-            return "None"
+        if role == self.ChainRole:
+            # Trả về chain mà rule thuộc về
+            return rule.get("chain", "INPUT")
         if role in role_map:
             return rule[role_map[role]]
         return None
@@ -206,18 +177,17 @@ class IptablesModel(QAbstractListModel):
             self.OutRole: b"out",
             self.SourceRole: b"source",
             self.DestinationRole: b"destination",
-            self.GroupRole: b"group",
+            self.ChainRole: b"chain",
         }
 
     def refreshRules(self):
         """Làm mới danh sách rule."""
-        self.group_map = get_group_map()
         all_rules = get_input_rules()
 
-        if self.filter_group:
+        if self.filter_chain:
             new_rules = [
                 r for r in all_rules
-                if self.group_map.get(normalize_rule_key(r["rule_key"]), self.group_map.get(r["rule_key"], "None")) == self.filter_group
+                if r.get("chain", "INPUT").lower() == self.filter_chain.lower()
             ]
         else:
             new_rules = all_rules
@@ -241,40 +211,34 @@ class IptablesModel(QAbstractListModel):
             print(f"Lỗi xóa rule: {e}")
 
     @pyqtSlot(str)
-    def setFilterGroup(self, group):
-        self.filter_group = group.strip()
+    def setFilterChain(self, chain):
+        self.filter_chain = chain.strip()
         self.refreshRules()
 
     @pyqtSlot(str)
-    def deleteGroupRule(self, group):
-        group = group.strip()
-        if not group:
-            print("Group rỗng.")
-            return
-
-        meta = get_group_map()
-        keys_to_delete = [k for k, v in meta.items() if v == group]
-        if not keys_to_delete:
-            print(f"Không tìm thấy rule nào trong group '{group}'")
+    def deleteChainRule(self, chain):
+        chain = chain.strip()
+        if not chain:
+            print("Chain rỗng.")
             return
 
         all_rules = get_input_rules()
-        # Normalize rule_key để match với keys trong meta
+        # Lọc rules theo chain
         rules_to_delete = [
             r for r in all_rules 
-            if normalize_rule_key(r["rule_key"]) in keys_to_delete or r["rule_key"] in keys_to_delete
+            if r.get("chain", "INPUT").upper() == chain.upper()
         ]
+
+        if not rules_to_delete:
+            print(f"Không tìm thấy rule nào trong chain '{chain}'")
+            return
 
         for r in sorted(rules_to_delete, key=lambda x: int(x["num"]), reverse=True):
             try:
-                subprocess.run(["sudo", "iptables", "-D", "INPUT", r["num"]], check=True)
-                print(f"Đã xoá rule {r['num']} trong group {group}")
+                rule_chain = r.get("chain", "INPUT")
+                subprocess.run(["sudo", "iptables", "-D", rule_chain, r["num"]], check=True)
+                print(f"Đã xoá rule {r['num']} trong chain {rule_chain}")
             except subprocess.CalledProcessError as e:
                 print(f"Lỗi xoá rule: {e}")
-
-        for k in keys_to_delete:
-            meta.pop(k, None)
-        with open(META_FILE, "w") as f:
-            json.dump(meta, f, indent=4)
 
         self.refreshRules()

@@ -4,7 +4,7 @@ Handler xử lý logic cho Rules Table (hiển thị, tìm kiếm, xóa rules)
 
 from PyQt6.QtWidgets import QTableWidgetItem
 from PyQt6.QtCore import Qt
-from backend.rules.core import get_input_rules, get_group_map, normalize_rule_key
+from backend.rules.core import get_input_rules, normalize_rule_key
 
 
 class RulesTableHandler:
@@ -23,7 +23,6 @@ class RulesTableHandler:
     def refresh_rules_table(self):
         """Lấy danh sách rule từ model và hiển thị trên tableRules"""
         rules = get_input_rules()
-        group_map = get_group_map()
         filter_text = self.current_filter.lower().strip()
         table = self.ui.tableRules
         
@@ -38,43 +37,37 @@ class RulesTableHandler:
                     checked_nums.add(num_item.text())
         
         table.setRowCount(0)
-        table.setColumnCount(12)
+        table.setColumnCount(13)
         headers = [
             "num", "pkts", "bytes", "target", "prot", "opt",
-            "in", "out", "source", "destination", "group", "delete"
+            "in", "out", "source", "destination", "chain", "detail", "delete"
         ]
         table.setHorizontalHeaderLabels(headers)
 
         for row_index, rule in enumerate(rules):
-            # Group filtering - normalize key để match với format trong rules_meta.json
-            norm_key = normalize_rule_key(rule["rule_key"])
+            # Chain filtering - lấy chain từ rule (mặc định là "INPUT" vì get_input_rules() chỉ lấy INPUT chain)
+            chain = rule.get("chain", "INPUT")
             
-            # Thử lookup với normalized key trước
-            group = group_map.get(norm_key)
-            if not group:
-                # Thử với key gốc
-                group = group_map.get(rule["rule_key"])
-            if not group:
-                # Thử với các biến thể của source/dest (* vs 0.0.0.0/0)
-                parts = norm_key.split()
-                if len(parts) >= 7:
-                    if parts[5] == "*":
-                        alt_key = f"{parts[0]} {parts[1]} {parts[2]} {parts[3]} {parts[4]} 0.0.0.0/0 {parts[6]}"
-                        group = group_map.get(alt_key)
-                    elif parts[5] == "0.0.0.0/0":
-                        alt_key = f"{parts[0]} {parts[1]} {parts[2]} {parts[3]} {parts[4]} * {parts[6]}"
-                        group = group_map.get(alt_key)
-            if not group:
-                group = "None"
-            
-            if filter_text and filter_text not in group.lower():
+            if filter_text and filter_text not in chain.lower():
                 continue
+            
+            # Lấy detail từ rule_key - phần sau destination
+            rule_key = rule.get("rule_key", "")
+            detail = ""
+            if rule_key:
+                # rule_key format: target prot opt in out source destination [extra...]
+                # rule_key được tạo từ parts[3:], nên format là: target prot opt in out source destination [extra...]
+                # destination ở index 6, detail là từ index 7 trở đi
+                parts = rule_key.split()
+                if len(parts) > 7:
+                    # Có thông tin bổ sung sau destination
+                    detail = " ".join(parts[7:])
             
             table.insertRow(row_index)
             values = [
                 rule["num"], rule["pkts"], rule["bytes"], rule["target"],
                 rule["prot"], rule["opt"], rule["in_"], rule["out"], 
-                rule["source"], rule["destination"], group
+                rule["source"], rule["destination"], chain, detail
             ]
             
             # Set items in the table read-only
@@ -92,20 +85,20 @@ class RulesTableHandler:
                 chk_item.setCheckState(Qt.CheckState.Checked)
             else:
                 chk_item.setCheckState(Qt.CheckState.Unchecked)
-            table.setItem(row_index, 11, chk_item)
+            table.setItem(row_index, 12, chk_item)
 
         table.resizeColumnsToContents()
     
     def on_search_clicked(self):
-        """Lọc theo group"""
-        group_name = self.ui.editRules.text().strip()
-        self.current_filter = group_name
-        self.iptables_model.setFilterGroup(group_name)
-        print(f"Filter applied: {group_name if group_name else 'All rules shown'}")
+        """Lọc theo chain"""
+        chain_name = self.ui.editRules.text().strip()
+        self.current_filter = chain_name
+        self.iptables_model.setFilterChain(chain_name)
+        print(f"Filter applied: {chain_name if chain_name else 'All rules shown'}")
     
     def on_delete_many_clicked(self):
         """
-        Xoá rule đã tick. Nếu không tick => xoá theo group trong editRules.
+        Xoá rule đã tick. Nếu không tick => xoá theo chain trong editRules.
         """
         table = self.ui.tableRules
         selected_nums = []
@@ -128,12 +121,12 @@ class RulesTableHandler:
                 except Exception as e:
                     print(f"Error deleting rule {num}: {e}")
         else:
-            group_name = self.ui.editRules.text().strip()
-            if group_name:
-                print(f"No chosen rule, deleting by group: {group_name}")
-                self.iptables_model.deleteGroupRule(group_name)
+            chain_name = self.ui.editRules.text().strip()
+            if chain_name:
+                print(f"No chosen rule, deleting by chain: {chain_name}")
+                self.iptables_model.deleteChainRule(chain_name)
             else:
-                print("No chosen rule and no group name provided.")
+                print("No chosen rule and no chain name provided.")
 
         self.refresh_rules_table()
 
