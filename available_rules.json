@@ -28,7 +28,7 @@
         "group": "Outbound Protection"
     },
     "FIN/XMAS/NULL Scan": {
-        "enabled": true,
+        "enabled": false,
         "group": "FIN/XMAS/NULL Scan"
     },
     "SSH/FTP Brute Force": {

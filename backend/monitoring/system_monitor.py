@@ -35,6 +35,9 @@ class SystemMonitor(QObject):
         # Giá trị hiện tại để chart có thể truy cập
         self.current_cpu_percent = 0
         self.current_ram_percent = 0
+        self.current_temperature = 0
+        self.current_network_rx = 0  # bytes per second
+        self.current_network_tx = 0  # bytes per second
 
         self.RAM_SPIKE_MB = 150        # tăng >150MB coi như đột biến
         self.CPU_SPIKE_PERCENT = 40    # tăng >40% trong 2 giây
@@ -49,6 +52,8 @@ class SystemMonitor(QObject):
         self.update_ram()
         self.update_disk()
         self.update_network()
+        self.update_temperature()
+        self.update_network_traffic()
         self.update_services()
 
     # =======================
@@ -221,6 +226,80 @@ class SystemMonitor(QObject):
                 # Lưu text gốc nếu cần (không overwrite throughput info)
                 base = label_net.text().split("|")[0].strip() if "|" in label_net.text() else label_net.text().strip()
                 label_net.setText(f"{base} | Procs: {count}")
+
+    # =======================
+    # === Temperature ===
+    # =======================
+    def update_temperature(self):
+        """Lấy nhiệt độ CPU từ /sys/class/thermal"""
+        try:
+            # Thử đọc nhiệt độ từ thermal zones
+            temp_celsius = None
+            for i in range(10):  # Thử các thermal zone 0-9
+                try:
+                    temp_file = f"/sys/class/thermal/thermal_zone{i}/temp"
+                    if os.path.exists(temp_file):
+                        with open(temp_file) as f:
+                            temp_millidegrees = int(f.read().strip())
+                            temp_celsius = temp_millidegrees / 1000.0
+                            break
+                except:
+                    continue
+            
+            # Fallback: dùng psutil nếu có
+            if temp_celsius is None:
+                try:
+                    temps = psutil.sensors_temperatures()
+                    if temps:
+                        # Lấy nhiệt độ đầu tiên tìm thấy
+                        for name, entries in temps.items():
+                            if entries:
+                                temp_celsius = entries[0].current
+                                break
+                except:
+                    pass
+            
+            if temp_celsius is not None:
+                self.current_temperature = temp_celsius
+            else:
+                self.current_temperature = 0
+                
+        except Exception as e:
+            print("❌ Temperature error:", e)
+            self.current_temperature = 0
+
+    # =======================
+    # === Network Traffic ===
+    # =======================
+    def update_network_traffic(self):
+        """Tính toán network traffic (bytes per second)"""
+        try:
+            # Lấy thống kê mạng từ psutil
+            net_io = psutil.net_io_counters()
+            current_rx = net_io.bytes_recv
+            current_tx = net_io.bytes_sent
+            
+            now = time.time()
+            delta_time = now - self.prev_time
+            
+            if delta_time > 0 and self.prev_net_rx > 0:
+                # Tính bytes per second
+                rx_speed = (current_rx - self.prev_net_rx) / delta_time
+                tx_speed = (current_tx - self.prev_net_tx) / delta_time
+                
+                self.current_network_rx = rx_speed
+                self.current_network_tx = tx_speed
+            else:
+                self.current_network_rx = 0
+                self.current_network_tx = 0
+            
+            self.prev_net_rx = current_rx
+            self.prev_net_tx = current_tx
+            
+        except Exception as e:
+            print("❌ Network traffic error:", e)
+            self.current_network_rx = 0
+            self.current_network_tx = 0
 
     # =======================
     # === Services ===

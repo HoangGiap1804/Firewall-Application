@@ -57,11 +57,21 @@ class SingleChart(QWidget):
         
         # Tạo series
         self.series = QLineSeries()
-        self.series.setName(f"{self.chart_type} Usage (%)")
         if self.chart_type == "CPU":
+            self.series.setName("CPU Usage (%)")
             self.series.setColor(Qt.GlobalColor.blue)
-        else:
+        elif self.chart_type == "RAM":
+            self.series.setName("RAM Usage (%)")
             self.series.setColor(Qt.GlobalColor.red)
+        elif self.chart_type == "Temperature":
+            self.series.setName("Temperature (°C)")
+            self.series.setColor(Qt.GlobalColor.magenta)
+        elif self.chart_type == "Network":
+            self.series.setName("Network Traffic (B/s)")
+            self.series.setColor(Qt.GlobalColor.green)
+        else:
+            self.series.setName(f"{self.chart_type} Usage (%)")
+            self.series.setColor(Qt.GlobalColor.blue)
         
         # Thêm series vào chart
         self.chart.addSeries(self.series)
@@ -74,11 +84,24 @@ class SingleChart(QWidget):
         self.chart.addAxis(self.axis_x, Qt.AlignmentFlag.AlignBottom)
         self.series.attachAxis(self.axis_x)
         
-        # Tạo và cấu hình trục Y (phần trăm)
+        # Tạo và cấu hình trục Y
         self.axis_y = QValueAxis()
-        self.axis_y.setTitleText("Usage (%)")
-        self.axis_y.setRange(0, 100)
-        self.axis_y.setLabelFormat("%.0f")
+        if self.chart_type == "CPU" or self.chart_type == "RAM":
+            self.axis_y.setTitleText("Usage (%)")
+            self.axis_y.setRange(0, 100)
+            self.axis_y.setLabelFormat("%.0f")
+        elif self.chart_type == "Temperature":
+            self.axis_y.setTitleText("Temperature (°C)")
+            self.axis_y.setRange(0, 100)
+            self.axis_y.setLabelFormat("%.1f")
+        elif self.chart_type == "Network":
+            self.axis_y.setTitleText("Traffic (B/s)")
+            self.axis_y.setRange(0, 1000000)  # Giá trị mặc định, sẽ tự động điều chỉnh
+            self.axis_y.setLabelFormat("%.0f")
+        else:
+            self.axis_y.setTitleText("Value")
+            self.axis_y.setRange(0, 100)
+            self.axis_y.setLabelFormat("%.0f")
         self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
         self.series.attachAxis(self.axis_y)
         
@@ -142,6 +165,27 @@ class SingleChart(QWidget):
             self.axis_x.setRange(current_time - 60, current_time)
         else:
             self.axis_x.setRange(0, 60)
+        
+        # Tự động điều chỉnh trục Y cho Network chart
+        if self.chart_type == "Network" and len(self.data_values) > 0:
+            min_val = min(self.data_values)
+            max_val = max(self.data_values)
+            
+            # Nếu có dữ liệu, điều chỉnh range
+            if max_val > 0:
+                # Thêm padding 10% ở trên và dưới
+                padding = max(max_val * 0.1, 1000)  # Ít nhất 1000 bytes padding
+                y_min = max(0, min_val - padding)
+                y_max = max_val + padding
+                
+                # Đảm bảo range tối thiểu
+                if y_max - y_min < 10000:
+                    y_max = y_min + 10000
+                
+                self.axis_y.setRange(y_min, y_max)
+            else:
+                # Nếu chưa có dữ liệu, dùng range mặc định
+                self.axis_y.setRange(0, 1000000)
     
     def update_chart(self):
         """Cập nhật biểu đồ"""
@@ -161,7 +205,7 @@ class SingleChart(QWidget):
 
 
 class SystemChartsManager:
-    """Quản lý cả 2 chart CPU và RAM, nhận dữ liệu từ SystemMonitor"""
+    """Quản lý cả 4 chart CPU, RAM, Temperature và Network Traffic, nhận dữ liệu từ SystemMonitor"""
     
     def __init__(self, monitor=None):
         """
@@ -170,6 +214,8 @@ class SystemChartsManager:
         self.monitor = monitor
         self.cpu_chart = SingleChart("CPU")
         self.ram_chart = SingleChart("RAM")
+        self.temp_chart = SingleChart("Temperature")
+        self.network_chart = SingleChart("Network")
         
         # Kết nối với monitor nếu có
         if monitor:
@@ -183,26 +229,40 @@ class SystemChartsManager:
         try:
             cpu_percent = getattr(self.monitor, 'current_cpu_percent', 0)
             ram_percent = getattr(self.monitor, 'current_ram_percent', 0)
+            temperature = getattr(self.monitor, 'current_temperature', 0)
+            network_rx = getattr(self.monitor, 'current_network_rx', 0)  # bytes per second
+            network_tx = getattr(self.monitor, 'current_network_tx', 0)  # bytes per second
             
             self.cpu_chart.add_data_point(cpu_percent)
             self.ram_chart.add_data_point(ram_percent)
+            self.temp_chart.add_data_point(temperature)
+            # Tính tổng network traffic: (rx + tx) bytes per second
+            # network_rx và network_tx đã là bytes per second (từ dữ liệu mới - dữ liệu cũ)
+            network_total_bps = network_rx + network_tx  # Giữ nguyên bytes per second
+            self.network_chart.add_data_point(network_total_bps)
         except Exception as e:
             print(f"Error updating chart data: {e}")
     
-    def update_data(self, cpu_percent, ram_percent):
+    def update_data(self, cpu_percent, ram_percent, temperature=0, network_mbps=0):
         """Cập nhật dữ liệu trực tiếp (nếu không dùng SystemMonitor)"""
         self.cpu_chart.add_data_point(cpu_percent)
         self.ram_chart.add_data_point(ram_percent)
+        self.temp_chart.add_data_point(temperature)
+        self.network_chart.add_data_point(network_mbps)
     
     def start_monitoring(self, interval=2000):
         """Bắt đầu giám sát"""
         self.cpu_chart.start_monitoring(interval)
         self.ram_chart.start_monitoring(interval)
+        self.temp_chart.start_monitoring(interval)
+        self.network_chart.start_monitoring(interval)
     
     def stop_monitoring(self):
         """Dừng giám sát"""
         self.cpu_chart.stop_monitoring()
         self.ram_chart.stop_monitoring()
+        self.temp_chart.stop_monitoring()
+        self.network_chart.stop_monitoring()
     
     def get_cpu_chart_view(self):
         """Trả về CPU chart view"""
@@ -211,6 +271,14 @@ class SystemChartsManager:
     def get_ram_chart_view(self):
         """Trả về RAM chart view"""
         return self.ram_chart.get_chart_view()
+    
+    def get_temperature_chart_view(self):
+        """Trả về Temperature chart view"""
+        return self.temp_chart.get_chart_view()
+    
+    def get_network_chart_view(self):
+        """Trả về Network chart view"""
+        return self.network_chart.get_chart_view()
 
 
 class SystemChart(QWidget):

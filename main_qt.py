@@ -6,6 +6,7 @@ from backend.ui import LogTab
 from backend.rules.core import IptablesModel
 from backend.monitoring import SystemMonitor, setup_charts
 from backend.rules.handlers import RulesTableHandler, AddRuleHandler, AvailableRulesHandler
+from frontend.ui_loader import load_all_tabs
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -14,6 +15,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = uic.loadUi("frontend/main.ui")
+        
+        # Load các tab riêng biệt
+        load_all_tabs(self.ui.tabWidget)
+        
+        # Tạo namespace để truy cập các widget trong tab
+        self._setup_ui_namespace()
 
         # Khởi tạo các components
         self._init_log_tab()
@@ -25,6 +32,17 @@ class MainWindow(QtWidgets.QMainWindow):
         # Show the main window
         self.ui.show()
     
+    def _setup_ui_namespace(self):
+        """Thiết lập namespace để truy cập các widget trong tab"""
+        # Tìm tất cả các widget trong các tab và thêm vào self.ui
+        for i in range(self.ui.tabWidget.count()):
+            tab = self.ui.tabWidget.widget(i)
+            # Tìm tất cả các widget con và thêm vào namespace
+            for widget in tab.findChildren(QtWidgets.QWidget):
+                widget_name = widget.objectName()
+                if widget_name:
+                    setattr(self.ui, widget_name, widget)
+    
     def _init_log_tab(self):
         """Khởi tạo Log Tab"""
         self.log_tab = LogTab(self.ui.tabLogTable)
@@ -32,7 +50,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _init_system_monitor(self):
         """Khởi tạo System Monitor và Charts"""
         self.monitor = SystemMonitor(self.ui)
-        self.charts_manager = setup_charts(self.ui, self.monitor)
+        self.sandbox_charts_manager, self.host_charts_manager = setup_charts(self.ui, self.monitor)
     
     def _init_rules_table(self):
         """Khởi tạo Rules Table Handler"""
@@ -52,13 +70,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def _init_add_rule(self):
         """Khởi tạo Add Rule Handler"""
         self.add_rule_handler = AddRuleHandler(self.ui)
-        # Kết nối button trong tab Add Rule
-        if hasattr(self.ui, "buttonAddRule"):
-            self.ui.buttonAddRule.clicked.connect(
-                lambda: self.add_rule_handler.on_add_rule_clicked(
-                    self.rules_table_handler.refresh_rules_table
-                )
-            )
         # Kết nối button trong frameAddRule (tab Rules)
         if hasattr(self.ui, "buttonAddRuleInFrame"):
             self.ui.buttonAddRuleInFrame.clicked.connect(

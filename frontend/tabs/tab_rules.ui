@@ -1,0 +1,842 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ui version="4.0">
+ <class>tabRules</class>
+ <widget class="QWidget" name="tabRules">
+  <attribute name="title">
+   <string>Rules</string>
+  </attribute>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QFrame" name="frameSearchBar">
+       <property name="styleSheet">
+        <string notr="true">QFrame#frameSearchBar {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #ffffff, stop:1 #f8f9fa);
+    padding: 15px;
+    margin-bottom: 10px;
+}
+</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+         <number>12</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="labelRules">
+          <property name="minimumSize">
+           <size>
+            <width>80</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLabel {
+    font-weight: 600;
+    font-size: 16px;
+    color: #2c3e50;
+    padding: 8px 12px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #3498db, stop:1 #2980b9);
+    color: white;
+    border-radius: 8px;
+}
+</string>
+          </property>
+          <property name="text">
+           <string>Rules</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="editRules">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 2px solid #bdc3c7;
+    border-radius: 8px;
+    padding: 10px 15px;
+    background-color: white;
+    font-size: 14px;
+    color: #2c3e50;
+}
+QLineEdit:focus {
+    border: 2px solid #3498db;
+    background-color: #f8f9fa;
+}
+QLineEdit:hover {
+    border-color: #95a5a6;
+}
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>Search by chain name...</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="buttonSearch">
+          <property name="minimumSize">
+           <size>
+            <width>120</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #27ae60, stop:1 #229954);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #229954, stop:1 #1e8449);
+    transform: translateY(-1px);
+}
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1e8449, stop:1 #196f3d);
+    transform: translateY(0px);
+}
+</string>
+          </property>
+          <property name="text">
+           <string>Search</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="buttonDeleteMany">
+          <property name="minimumSize">
+           <size>
+            <width>140</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #e74c3c, stop:1 #c0392b);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #c0392b, stop:1 #a93226);
+    transform: translateY(-1px);
+}
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #a93226, stop:1 #922b21);
+    transform: translateY(0px);
+}
+</string>
+          </property>
+          <property name="text">
+           <string>Delete Many</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frameAddRule">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>280</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame#frameAddRule {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #ffffff, stop:1 #f8f9fa);
+    padding: 10px;
+}
+</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <layout class="QGridLayout" name="gridLayoutAddRule">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
+        <property name="bottomMargin">
+         <number>8</number>
+        </property>
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <item row="0" column="0" colspan="6">
+         <widget class="QLabel" name="labelAddRuleTitle">
+          <property name="styleSheet">
+           <string notr="true">font-weight: 600; 
+font-size: 14px; 
+color: #2c3e50;
+padding-bottom: 6px;
+border-bottom: 2px solid #3498db;
+</string>
+          </property>
+          <property name="text">
+           <string>Add New Firewall Rule</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="labelAddRuleProtocol">
+          <property name="minimumSize">
+           <size>
+            <width>70</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>Prot:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QComboBox" name="comboAddRuleProtocol">
+          <property name="styleSheet">
+           <string notr="true">QComboBox {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QComboBox:hover { border-color: #3498db; }
+QComboBox::drop-down { border: none; width: 18px; }
+QComboBox::down-arrow {
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 5px solid #7f8c8d;
+    margin-right: 4px;
+}
+</string>
+          </property>
+          <item>
+           <property name="text">
+            <string>TCP</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>UDP</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>ICMP</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QLabel" name="labelAddRuleAction">
+          <property name="minimumSize">
+           <size>
+            <width>60</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>Target:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QComboBox" name="comboAddRuleAction">
+          <property name="styleSheet">
+           <string notr="true">QComboBox {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QComboBox:hover { border-color: #3498db; }
+QComboBox::drop-down { border: none; width: 18px; }
+QComboBox::down-arrow {
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 5px solid #7f8c8d;
+    margin-right: 4px;
+}
+</string>
+          </property>
+          <item>
+           <property name="text">
+            <string>ACCEPT</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>DROP</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>REJECT</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>LOG</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="1" column="4">
+         <widget class="QLabel" name="labelAddRuleOpt">
+          <property name="minimumSize">
+           <size>
+            <width>40</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>Opt:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5">
+         <widget class="QLineEdit" name="editAddRuleOpt">
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
+QLineEdit:hover { border-color: #95a5a6; }
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>--</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="labelAddRuleSource">
+          <property name="minimumSize">
+           <size>
+            <width>70</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>Source:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="editAddRuleSource">
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
+QLineEdit:hover { border-color: #95a5a6; }
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>0.0.0.0/0</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QLabel" name="labelAddRuleDestination">
+          <property name="minimumSize">
+           <size>
+            <width>70</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>Dest:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="3">
+         <widget class="QLineEdit" name="editAddRuleDestination">
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
+QLineEdit:hover { border-color: #95a5a6; }
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>0.0.0.0/0</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="4">
+         <widget class="QLabel" name="labelAddRulePort">
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>Port:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="5">
+         <widget class="QLineEdit" name="editAddRulePort">
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
+QLineEdit:hover { border-color: #95a5a6; }
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>80,443</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="labelAddRuleIn">
+          <property name="minimumSize">
+           <size>
+            <width>70</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>In:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="editAddRuleIn">
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
+QLineEdit:hover { border-color: #95a5a6; }
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>*</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QLabel" name="labelAddRuleOut">
+          <property name="minimumSize">
+           <size>
+            <width>70</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>Out:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="3">
+         <widget class="QLineEdit" name="editAddRuleOut">
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
+QLineEdit:hover { border-color: #95a5a6; }
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>*</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="4">
+         <widget class="QLabel" name="labelAddRuleState">
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>State:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="5">
+         <widget class="QLineEdit" name="editAddRuleState">
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
+QLineEdit:hover { border-color: #95a5a6; }
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>NEW</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0" colspan="6">
+         <layout class="QHBoxLayout" name="horizontalLayoutAddRule">
+          <property name="spacing">
+           <number>8</number>
+          </property>
+          <item>
+           <spacer name="horizontalSpacerAddRuleLeft">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonAddRuleInFrame">
+            <property name="minimumSize">
+             <size>
+              <width>120</width>
+              <height>32</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #3498db, stop:1 #2980b9);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+}
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2980b9, stop:1 #21618c);
+}
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #21618c, stop:1 #1b4f72);
+}
+</string>
+            </property>
+            <property name="text">
+             <string>Add Rule</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacerAddRule">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTableWidget" name="tableRules">
+       <property name="styleSheet">
+        <string notr="true">QTableWidget {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: white;
+    gridline-color: #f0f0f0;
+    font-size: 13px;
+    selection-background-color: #e3f2fd;
+    selection-color: #1976d2;
+}
+
+QTableWidget::item {
+    padding: 8px;
+    border: none;
+    color: #2c3e50;
+}
+
+QTableWidget::item:selected {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+QTableWidget::item:hover {
+    background-color: #f5f5f5;
+}
+
+QHeaderView::section {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #3498db, stop:1 #2980b9);
+    color: white;
+    padding: 10px;
+    border: none;
+    border-right: 1px solid #2980b9;
+    border-bottom: 2px solid #2980b9;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+QHeaderView::section:first {
+    border-top-left-radius: 8px;
+}
+
+QHeaderView::section:last {
+    border-top-right-radius: 8px;
+    border-right: none;
+}
+
+QHeaderView::section:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2980b9, stop:1 #21618c);
+}
+
+QTableCornerButton::section {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #3498db, stop:1 #2980b9);
+    border-top-left-radius: 8px;
+    border: none;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: #f5f5f5;
+    width: 12px;
+    border-radius: 6px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #bdc3c7;
+    border-radius: 6px;
+    min-height: 20px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #95a5a6;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background: #f5f5f5;
+    height: 12px;
+    border-radius: 6px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background: #bdc3c7;
+    border-radius: 6px;
+    min-width: 20px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #95a5a6;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+</string>
+       </property>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="selectionBehavior">
+        <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+       <property name="gridStyle">
+        <enum>Qt::SolidLine</enum>
+       </property>
+       <column>
+        <property name="text">
+         <string>num</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>pkts</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>bytes</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>target</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>prot</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>opt</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>in</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>out</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>source</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>destination</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>chain</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>detail</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>delete</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources />
+ <connections />
+</ui>
