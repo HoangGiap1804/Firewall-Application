@@ -17,7 +17,58 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>3</number>
+      <number>4</number>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QTabWidget::pane {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: white;
+    top: -1px;
+}
+
+QTabWidget::tab-bar {
+    alignment: left;
+}
+
+QTabBar::tab {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #f5f5f5, stop:1 #e8e8e8);
+    color: #555555;
+    border: 1px solid #d0d0d0;
+    border-bottom: none;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 8px 16px;
+    margin-right: 2px;
+    font-weight: 500;
+    font-size: 12px;
+    min-width: 80px;
+}
+
+QTabBar::tab:selected {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #3498db, stop:1 #2980b9);
+    color: white;
+    border: 1px solid #2980b9;
+    border-bottom: 1px solid white;
+    font-weight: 600;
+}
+
+QTabBar::tab:hover:!selected {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #e8e8e8, stop:1 #d8d8d8);
+    color: #2c3e50;
+}
+
+QTabBar::tab:first {
+    margin-left: 5px;
+}
+
+QTabBar::tab:last {
+    margin-right: 5px;
+}
+</string>
      </property>
      <widget class="QWidget" name="tabLog">
       <attribute name="title">
@@ -40,9 +91,6 @@
              <height>40</height>
             </size>
            </property>
-           <property name="text">
-            <string>Firewall Logs</string>
-           </property>
            <property name="styleSheet">
             <string notr="true">QLabel {
     font-weight: 600;
@@ -56,6 +104,9 @@
     margin-bottom: 5px;
 }
 </string>
+           </property>
+           <property name="text">
+            <string>Firewall Logs</string>
            </property>
           </widget>
          </item>
@@ -354,9 +405,6 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
             <enum>QFrame::Raised</enum>
            </property>
            <layout class="QGridLayout" name="gridLayoutAddRule">
-            <property name="spacing">
-             <number>12</number>
-            </property>
             <property name="leftMargin">
              <number>10</number>
             </property>
@@ -369,11 +417,11 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
             <property name="bottomMargin">
              <number>10</number>
             </property>
+            <property name="spacing">
+             <number>12</number>
+            </property>
             <item row="0" column="0" colspan="4">
              <widget class="QLabel" name="labelAddRuleTitle">
-              <property name="text">
-               <string>➕ Add New Firewall Rule</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">font-weight: 600; 
 font-size: 16px; 
@@ -381,6 +429,9 @@ color: #2c3e50;
 padding-bottom: 8px;
 border-bottom: 2px solid #3498db;
 </string>
+              </property>
+              <property name="text">
+               <string>➕ Add New Firewall Rule</string>
               </property>
              </widget>
             </item>
@@ -392,11 +443,11 @@ border-bottom: 2px solid #3498db;
                 <height>0</height>
                </size>
               </property>
-              <property name="text">
-               <string>Protocol:</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+              <property name="text">
+               <string>Protocol:</string>
               </property>
              </widget>
             </item>
@@ -451,11 +502,11 @@ QComboBox::down-arrow {
                 <height>0</height>
                </size>
               </property>
-              <property name="text">
-               <string>Action:</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+              <property name="text">
+               <string>Action:</string>
               </property>
              </widget>
             </item>
@@ -510,19 +561,16 @@ QComboBox::down-arrow {
                 <height>0</height>
                </size>
               </property>
-              <property name="text">
-               <string>Source IP:</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+              <property name="text">
+               <string>Source IP:</string>
               </property>
              </widget>
             </item>
             <item row="2" column="1">
              <widget class="QLineEdit" name="editAddRuleSource">
-              <property name="placeholderText">
-               <string>e.g., 192.168.1.0/24</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">QLineEdit {
     border: 1px solid #bdc3c7;
@@ -539,6 +587,9 @@ QLineEdit:hover {
     border-color: #95a5a6;
 }
 </string>
+              </property>
+              <property name="placeholderText">
+               <string>e.g., 192.168.1.0/24</string>
               </property>
              </widget>
             </item>
@@ -550,19 +601,16 @@ QLineEdit:hover {
                 <height>0</height>
                </size>
               </property>
-              <property name="text">
-               <string>Port:</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+              <property name="text">
+               <string>Port:</string>
               </property>
              </widget>
             </item>
             <item row="2" column="3">
              <widget class="QLineEdit" name="editAddRulePort">
-              <property name="placeholderText">
-               <string>e.g., 80, 443</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">QLineEdit {
     border: 1px solid #bdc3c7;
@@ -579,6 +627,9 @@ QLineEdit:hover {
     border-color: #95a5a6;
 }
 </string>
+              </property>
+              <property name="placeholderText">
+               <string>e.g., 80, 443</string>
               </property>
              </widget>
             </item>
@@ -590,19 +641,16 @@ QLineEdit:hover {
                 <height>0</height>
                </size>
               </property>
-              <property name="text">
-               <string>Interface:</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+              <property name="text">
+               <string>Interface:</string>
               </property>
              </widget>
             </item>
             <item row="3" column="1">
              <widget class="QLineEdit" name="editAddRuleInterface">
-              <property name="placeholderText">
-               <string>e.g., eth0</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">QLineEdit {
     border: 1px solid #bdc3c7;
@@ -619,6 +667,9 @@ QLineEdit:hover {
     border-color: #95a5a6;
 }
 </string>
+              </property>
+              <property name="placeholderText">
+               <string>e.g., eth0</string>
               </property>
              </widget>
             </item>
@@ -630,19 +681,16 @@ QLineEdit:hover {
                 <height>0</height>
                </size>
               </property>
-              <property name="text">
-               <string>State:</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+              <property name="text">
+               <string>State:</string>
               </property>
              </widget>
             </item>
             <item row="3" column="3">
              <widget class="QLineEdit" name="editAddRuleState">
-              <property name="placeholderText">
-               <string>e.g., NEW, ESTABLISHED</string>
-              </property>
               <property name="styleSheet">
                <string notr="true">QLineEdit {
     border: 1px solid #bdc3c7;
@@ -659,6 +707,9 @@ QLineEdit:hover {
     border-color: #95a5a6;
 }
 </string>
+              </property>
+              <property name="placeholderText">
+               <string>e.g., NEW, ESTABLISHED</string>
               </property>
              </widget>
             </item>
@@ -688,9 +739,6 @@ QLineEdit:hover {
                   <height>40</height>
                  </size>
                 </property>
-                <property name="text">
-                 <string>Add Rule</string>
-                </property>
                 <property name="styleSheet">
                  <string notr="true">QPushButton {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -713,6 +761,9 @@ QPushButton:pressed {
     transform: translateY(0px);
 }
 </string>
+                </property>
+                <property name="text">
+                 <string>Add Rule</string>
                 </property>
                </widget>
               </item>
@@ -1162,8 +1213,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
       <attribute name="title">
        <string>Page</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-      </layout>
+      <layout class="QVBoxLayout" name="verticalLayout_3"/>
      </widget>
      <widget class="QWidget" name="tabAvailableRules">
       <attribute name="title">
@@ -1178,6 +1228,60 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
          <property name="widgetResizable">
           <bool>true</bool>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QScrollArea {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: #f5f5f5;
+    width: 14px;
+    border-radius: 7px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical {
+    background: #9b59b6;
+    border-radius: 7px;
+    min-height: 30px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #8e44ad;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background: #f5f5f5;
+    height: 14px;
+    border-radius: 7px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #9b59b6;
+    border-radius: 7px;
+    min-width: 30px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #8e44ad;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+</string>
+         </property>
          <widget class="QWidget" name="scrollAreaWidgetContents">
           <property name="geometry">
            <rect>
@@ -1188,6 +1292,21 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <property name="leftMargin">
+            <number>15</number>
+           </property>
+           <property name="topMargin">
+            <number>15</number>
+           </property>
+           <property name="rightMargin">
+            <number>15</number>
+           </property>
+           <property name="bottomMargin">
+            <number>15</number>
+           </property>
            <item>
             <widget class="QFrame" name="frameBroadcast">
              <property name="maximumSize">
@@ -1197,13 +1316,7 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
               </size>
              </property>
              <property name="styleSheet">
-              <string notr="true">QFrame#frameBroadcast {
-    border: 1px solid #c8c8c8;
-    border-radius: 8px;
-    background-color: white;
-    padding: 6px;
-}
-</string>
+              <string notr="true"/>
              </property>
              <property name="frameShape">
               <enum>QFrame::StyledPanel</enum>
@@ -1737,7 +1850,7 @@ QCheckBox::indicator:checked {
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_6"/>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>200</x>
