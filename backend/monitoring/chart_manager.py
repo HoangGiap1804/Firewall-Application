@@ -3,8 +3,8 @@ Module quản lý việc setup và hiển thị charts trong UI
 """
 
 from PyQt6 import QtWidgets
-from backend.system_monitor import SystemMonitor
-from backend.system_chart import SystemChartsManager
+from .system_monitor import SystemMonitor
+from .system_chart import SystemChartsManager
 
 
 def setup_charts(ui, monitor):

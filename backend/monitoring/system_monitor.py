@@ -3,7 +3,7 @@ import time
 import subprocess
 from PyQt6.QtCore import QObject, QTimer, pyqtSlot
 from PyQt6.QtWidgets import QLabel
-from backend.mailer import send_malware_alert
+from backend.notifications import send_malware_alert
 import re
 import psutil
 

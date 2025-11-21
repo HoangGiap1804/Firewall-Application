@@ -1,6 +1,7 @@
 {
-    "ACCEPT None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
-    "LOG None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
-    "DROP None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
-    "FIN_PROTECT None -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan"
+    "ACCEPT 6 -- * * 1.0.0.0 0.0.0.0/0 tcp dpt:1234": "illi",
+    "LOG 6 -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
+    "DROP 6 -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
+    "FIN_PROTECT * -- * * * 0.0.0.0/0": "FIN/XMAS/NULL Scan",
+    "ACCEPT 6 -- * * 4.0.0.4 0.0.0.0/0 tcp dpt:24": "12345"
 }

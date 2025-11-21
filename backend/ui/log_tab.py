@@ -3,8 +3,7 @@ from PyQt6.QtCore import QProcess
 from PyQt6.QtWidgets import QTableWidgetItem
 from PyQt6.QtGui import QColor
 import re
-from backend.mailer import send_attack_alert
-from backend.notification import send_notification
+from backend.notifications import send_attack_alert, send_notification
 from datetime import datetime
 import threading
 import subprocess
