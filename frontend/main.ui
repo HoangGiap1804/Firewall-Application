@@ -17,7 +17,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>5</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tabLog">
       <attribute name="title">
@@ -36,23 +36,151 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>2</width>
-             <height>2</height>
-            </size>
-           </property>
-           <property name="baseSize">
-            <size>
-             <width>2</width>
-             <height>2</height>
+             <width>0</width>
+             <height>40</height>
             </size>
            </property>
            <property name="text">
-            <string>Log tab</string>
+            <string>Firewall Logs</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    font-weight: 600;
+    font-size: 18px;
+    color: #2c3e50;
+    padding: 10px 15px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #3498db, stop:1 #2980b9);
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 5px;
+}
+</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QTableWidget" name="tabLogTable">
+           <property name="styleSheet">
+            <string notr="true">QTableWidget {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: white;
+    gridline-color: #f0f0f0;
+    font-size: 12px;
+    selection-background-color: #fff3e0;
+    selection-color: #e65100;
+}
+
+QTableWidget::item {
+    padding: 6px;
+    border: none;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+QTableWidget::item:selected {
+    background-color: #fff3e0;
+    color: #e65100;
+    font-weight: bold;
+}
+
+QTableWidget::item:hover {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+QHeaderView::section {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #e67e22, stop:1 #d35400);
+    color: white;
+    padding: 10px;
+    border: none;
+    border-right: 1px solid #d35400;
+    border-bottom: 2px solid #d35400;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+QHeaderView::section:first {
+    border-top-left-radius: 8px;
+}
+
+QHeaderView::section:last {
+    border-top-right-radius: 8px;
+    border-right: none;
+}
+
+QHeaderView::section:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #d35400, stop:1 #c0392b);
+}
+
+QTableCornerButton::section {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #e67e22, stop:1 #d35400);
+    border-top-left-radius: 8px;
+    border: none;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: #f5f5f5;
+    width: 12px;
+    border-radius: 6px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #bdc3c7;
+    border-radius: 6px;
+    min-height: 20px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #95a5a6;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background: #f5f5f5;
+    height: 12px;
+    border-radius: 6px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background: #bdc3c7;
+    border-radius: 6px;
+    min-width: 20px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #95a5a6;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+</string>
+           </property>
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <property name="selectionBehavior">
+            <enum>QAbstractItemView::SelectRows</enum>
+           </property>
+           <property name="gridStyle">
+            <enum>Qt::SolidLine</enum>
+           </property>
            <column>
             <property name="text">
              <string>in</string>
@@ -202,7 +330,529 @@
           </layout>
          </item>
          <item>
+          <widget class="QFrame" name="frameAddRule">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>320</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QFrame#frameAddRule {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #ffffff, stop:1 #f8f9fa);
+    padding: 15px;
+}
+</string>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Raised</enum>
+           </property>
+           <layout class="QGridLayout" name="gridLayoutAddRule">
+            <property name="spacing">
+             <number>12</number>
+            </property>
+            <property name="leftMargin">
+             <number>10</number>
+            </property>
+            <property name="topMargin">
+             <number>10</number>
+            </property>
+            <property name="rightMargin">
+             <number>10</number>
+            </property>
+            <property name="bottomMargin">
+             <number>10</number>
+            </property>
+            <item row="0" column="0" colspan="4">
+             <widget class="QLabel" name="labelAddRuleTitle">
+              <property name="text">
+               <string>➕ Add New Firewall Rule</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 600; 
+font-size: 16px; 
+color: #2c3e50;
+padding-bottom: 8px;
+border-bottom: 2px solid #3498db;
+</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="labelAddRuleProtocol">
+              <property name="minimumSize">
+               <size>
+                <width>90</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Protocol:</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QComboBox" name="comboAddRuleProtocol">
+              <property name="styleSheet">
+               <string notr="true">QComboBox {
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    padding: 6px 12px;
+    background-color: white;
+    font-size: 13px;
+}
+QComboBox:hover {
+    border-color: #3498db;
+}
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+QComboBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid #7f8c8d;
+    margin-right: 5px;
+}
+</string>
+              </property>
+              <item>
+               <property name="text">
+                <string>TCP</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>UDP</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>ICMP</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QLabel" name="labelAddRuleAction">
+              <property name="minimumSize">
+               <size>
+                <width>90</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Action:</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QComboBox" name="comboAddRuleAction">
+              <property name="styleSheet">
+               <string notr="true">QComboBox {
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    padding: 6px 12px;
+    background-color: white;
+    font-size: 13px;
+}
+QComboBox:hover {
+    border-color: #3498db;
+}
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+QComboBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid #7f8c8d;
+    margin-right: 5px;
+}
+</string>
+              </property>
+              <item>
+               <property name="text">
+                <string>ACCEPT</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>DROP</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>REJECT</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="labelAddRuleSource">
+              <property name="minimumSize">
+               <size>
+                <width>90</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Source IP:</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="editAddRuleSource">
+              <property name="placeholderText">
+               <string>e.g., 192.168.1.0/24</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background-color: white;
+    font-size: 13px;
+}
+QLineEdit:focus {
+    border: 2px solid #3498db;
+    background-color: #f8f9fa;
+}
+QLineEdit:hover {
+    border-color: #95a5a6;
+}
+</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QLabel" name="labelAddRulePort">
+              <property name="minimumSize">
+               <size>
+                <width>90</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Port:</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QLineEdit" name="editAddRulePort">
+              <property name="placeholderText">
+               <string>e.g., 80, 443</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background-color: white;
+    font-size: 13px;
+}
+QLineEdit:focus {
+    border: 2px solid #3498db;
+    background-color: #f8f9fa;
+}
+QLineEdit:hover {
+    border-color: #95a5a6;
+}
+</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="labelAddRuleInterface">
+              <property name="minimumSize">
+               <size>
+                <width>90</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Interface:</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="editAddRuleInterface">
+              <property name="placeholderText">
+               <string>e.g., eth0</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background-color: white;
+    font-size: 13px;
+}
+QLineEdit:focus {
+    border: 2px solid #3498db;
+    background-color: #f8f9fa;
+}
+QLineEdit:hover {
+    border-color: #95a5a6;
+}
+</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <widget class="QLabel" name="labelAddRuleState">
+              <property name="minimumSize">
+               <size>
+                <width>90</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>State:</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; color: #34495e;</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="3">
+             <widget class="QLineEdit" name="editAddRuleState">
+              <property name="placeholderText">
+               <string>e.g., NEW, ESTABLISHED</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    padding: 8px 12px;
+    background-color: white;
+    font-size: 13px;
+}
+QLineEdit:focus {
+    border: 2px solid #3498db;
+    background-color: #f8f9fa;
+}
+QLineEdit:hover {
+    border-color: #95a5a6;
+}
+</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0" colspan="4">
+             <layout class="QHBoxLayout" name="horizontalLayoutAddRule">
+              <property name="spacing">
+               <number>10</number>
+              </property>
+              <item>
+               <spacer name="horizontalSpacerAddRuleLeft">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="buttonAddRuleInFrame">
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>40</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Add Rule</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #3498db, stop:1 #2980b9);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2980b9, stop:1 #21618c);
+    transform: translateY(-1px);
+}
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #21618c, stop:1 #1b4f72);
+    transform: translateY(0px);
+}
+</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacerAddRule">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="QTableWidget" name="tableRules">
+           <property name="styleSheet">
+            <string notr="true">QTableWidget {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: white;
+    gridline-color: #f0f0f0;
+    font-size: 13px;
+    selection-background-color: #e3f2fd;
+    selection-color: #1976d2;
+}
+
+QTableWidget::item {
+    padding: 8px;
+    border: none;
+    color: #2c3e50;
+}
+
+QTableWidget::item:selected {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+QTableWidget::item:hover {
+    background-color: #f5f5f5;
+}
+
+QHeaderView::section {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #3498db, stop:1 #2980b9);
+    color: white;
+    padding: 10px;
+    border: none;
+    border-right: 1px solid #2980b9;
+    border-bottom: 2px solid #2980b9;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+QHeaderView::section:first {
+    border-top-left-radius: 8px;
+}
+
+QHeaderView::section:last {
+    border-top-right-radius: 8px;
+    border-right: none;
+}
+
+QHeaderView::section:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2980b9, stop:1 #21618c);
+}
+
+QTableCornerButton::section {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #3498db, stop:1 #2980b9);
+    border-top-left-radius: 8px;
+    border: none;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: #f5f5f5;
+    width: 12px;
+    border-radius: 6px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #bdc3c7;
+    border-radius: 6px;
+    min-height: 20px;
+    margin: 2px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #95a5a6;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background: #f5f5f5;
+    height: 12px;
+    border-radius: 6px;
+    margin: 0;
+}
+
+QScrollBar::handle:horizontal {
+    background: #bdc3c7;
+    border-radius: 6px;
+    min-width: 20px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #95a5a6;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    width: 0px;
+}
+</string>
+           </property>
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <property name="selectionBehavior">
+            <enum>QAbstractItemView::SelectRows</enum>
+           </property>
+           <property name="gridStyle">
+            <enum>Qt::SolidLine</enum>
+           </property>
            <column>
             <property name="text">
              <string>num</string>
@@ -255,7 +905,12 @@
            </column>
            <column>
             <property name="text">
-             <string>group</string>
+             <string>chain</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>detail</string>
             </property>
            </column>
            <column>
@@ -501,6 +1156,13 @@
          </property>
         </widget>
        </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_3">
+      <attribute name="title">
+       <string>Page</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
       </layout>
      </widget>
      <widget class="QWidget" name="tabAvailableRules">
@@ -1058,267 +1720,272 @@ QCheckBox::indicator:checked {
       <attribute name="title">
        <string>Sandbox</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_25">
-       <item>
-        <widget class="QWidget" name="widget" native="true">
-         <property name="maximumSize">
-          <size>
-           <width>600</width>
-           <height>400</height>
-          </size>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_6">
+      <widget class="QWidget" name="widget" native="true">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>620</y>
+         <width>228</width>
+         <height>174</height>
+        </rect>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>600</width>
+         <height>400</height>
+        </size>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_6"/>
+      </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>200</x>
+         <y>160</y>
+         <width>210</width>
+         <height>156</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>System Containers</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_15">
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>System Containers</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_15">
-              <item>
-               <widget class="QLabel" name="label">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>RAM:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_ram">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>RAM</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_21">
-              <item>
-               <widget class="QLabel" name="label_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>CPU:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_cpu">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>CPU</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_22">
-              <item>
-               <widget class="QLabel" name="label_5">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Network:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_network">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Network</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_23">
-              <item>
-               <widget class="QLabel" name="label_7">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Disk:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_disk">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Disk</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_24">
-              <item>
-               <widget class="QLabel" name="label_9">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Service:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_service">
-                <property name="minimumSize">
-                 <size>
-                  <width>100</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Service</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
+           <widget class="QLabel" name="label">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>RAM:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_ram">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>RAM</string>
+            </property>
+           </widget>
           </item>
          </layout>
-        </widget>
-       </item>
-      </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_21">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>CPU:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_cpu">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>CPU</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_22">
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Network:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_network">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Network</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_23">
+          <item>
+           <widget class="QLabel" name="label_7">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Disk:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_disk">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Disk</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_24">
+          <item>
+           <widget class="QLabel" name="label_9">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Service:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_service">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>50</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Service</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
      </widget>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
        <string>Graph</string>
       </attribute>
-      <widget class="QWidget" name="verticalLayoutWidget">
+      <widget class="QFrame" name="frameGraph">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>20</y>
-         <width>701</width>
-         <height>501</height>
+         <x>30</x>
+         <y>10</y>
+         <width>671</width>
+         <height>541</height>
         </rect>
        </property>
-       <layout class="QVBoxLayout" name="vboxlayout">
-        <item>
-         <widget class="QFrame" name="frameGraph">
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
       </widget>
      </widget>
     </widget>

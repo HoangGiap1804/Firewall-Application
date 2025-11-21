@@ -53,4 +53,58 @@ class AddRuleHandler:
 
         # Refresh rules table
         refresh_callback()
+    
+    def on_add_rule_in_frame_clicked(self, refresh_callback):
+        """
+        Lấy dữ liệu từ frameAddRule và gọi IptablesHandler.addRule(...)
+        Sau khi thêm, gọi refresh_callback để refresh tableRules.
+        
+        Args:
+            refresh_callback: Function để refresh rules table sau khi thêm
+        """
+        # Receive inputs from frameAddRule
+        state = self.ui.editAddRuleState.text().strip() if hasattr(self.ui, "editAddRuleState") else ""
+        interface = self.ui.editAddRuleInterface.text().strip() if hasattr(self.ui, "editAddRuleInterface") else ""
+        protocol = ""
+        if hasattr(self.ui, "comboAddRuleProtocol"):
+            protocol = self.ui.comboAddRuleProtocol.currentText().strip()
+        action = ""
+        if hasattr(self.ui, "comboAddRuleAction"):
+            action = self.ui.comboAddRuleAction.currentText().strip()
+        port = self.ui.editAddRulePort.text().strip() if hasattr(self.ui, "editAddRulePort") else ""
+        source = self.ui.editAddRuleSource.text().strip() if hasattr(self.ui, "editAddRuleSource") else ""
+        # Group không có trong frameAddRule, để trống
+        group = ""
+
+        # Lowercase for protocols
+        protocol_map = {"TCP": "tcp", "UDP": "udp", "ICMP": "icmp", "": ""}
+        protocol_normalized = protocol_map.get(protocol.upper(), protocol.lower())
+
+        # Uppercase for actions
+        action_normalized = action.upper() if action else ""
+
+        # Validate required fields
+        if not protocol_normalized or not action_normalized:
+            print("Protocol và Action là bắt buộc!")
+            return
+
+        # Call backend method: addRule(ip, port, protocol, action, interface, state, group="")
+        try:
+            self.ip_handler.addRule(source, port, protocol_normalized, action_normalized, interface, state, group)
+            print("✅ Đã thêm rule từ frameAddRule")
+            
+            # Clear form after successful add
+            if hasattr(self.ui, "editAddRuleState"):
+                self.ui.editAddRuleState.clear()
+            if hasattr(self.ui, "editAddRuleInterface"):
+                self.ui.editAddRuleInterface.clear()
+            if hasattr(self.ui, "editAddRulePort"):
+                self.ui.editAddRulePort.clear()
+            if hasattr(self.ui, "editAddRuleSource"):
+                self.ui.editAddRuleSource.clear()
+        except Exception as e:
+            print(f"❌ Lỗi khi thêm rule: {e}")
+
+        # Refresh rules table
+        refresh_callback()
 

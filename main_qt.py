@@ -52,11 +52,20 @@ class MainWindow(QtWidgets.QMainWindow):
     def _init_add_rule(self):
         """Khởi tạo Add Rule Handler"""
         self.add_rule_handler = AddRuleHandler(self.ui)
-        self.ui.buttonAddRule.clicked.connect(
-            lambda: self.add_rule_handler.on_add_rule_clicked(
-                self.rules_table_handler.refresh_rules_table
+        # Kết nối button trong tab Add Rule
+        if hasattr(self.ui, "buttonAddRule"):
+            self.ui.buttonAddRule.clicked.connect(
+                lambda: self.add_rule_handler.on_add_rule_clicked(
+                    self.rules_table_handler.refresh_rules_table
+                )
             )
-        )
+        # Kết nối button trong frameAddRule (tab Rules)
+        if hasattr(self.ui, "buttonAddRuleInFrame"):
+            self.ui.buttonAddRuleInFrame.clicked.connect(
+                lambda: self.add_rule_handler.on_add_rule_in_frame_clicked(
+                    self.rules_table_handler.refresh_rules_table
+                )
+            )
     
     def _init_available_rules(self):
         """Khởi tạo Available Rules Handler"""
