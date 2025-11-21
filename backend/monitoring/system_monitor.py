@@ -249,7 +249,7 @@ class SystemMonitor(QObject):
                     )
 
             if label:
-                label.setText(f"{running} đang chạy")
+                label.setText(f"{running} running services")
 
         except Exception as e:
             print("❌ Service error:", e)
