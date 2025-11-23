@@ -6,3 +6,6 @@ PyQt6-Charts>=6.9.0,<6.10.0
 python-dotenv
 psutil
 notify2
+flask>=2.0.0
+flask-cors>=3.0.0
+requests>=2.25.0

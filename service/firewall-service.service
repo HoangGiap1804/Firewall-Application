@@ -1,0 +1,18 @@
+[Unit]
+Description=Firewall Management Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/nqim/PBL6
+Environment="PATH=/home/nqim/PBL6/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/home/nqim/PBL6/venv/bin/python3 /home/nqim/PBL6/service/firewall_service.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+

@@ -18,7 +18,7 @@ do
         sudo chmod +x "$SANDBOX_FILE"
         echo "Set executable permission for: $FILE"
     else
-        echo "⚠️  File not found in sandbox: $SANDBOX_FILE"
+        echo "File not found in sandbox: $SANDBOX_FILE"
         continue
     fi
 
