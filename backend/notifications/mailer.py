@@ -1,5 +1,6 @@
 import os
 import smtplib
+import threading
 from dotenv import load_dotenv
 from email.message import EmailMessage
 from datetime import datetime
@@ -11,7 +12,18 @@ SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
 PASSWORD_EMAIL = os.getenv("PASSWORD_EMAIL")
 
-def send_attack_alert(attack_type: str, src_ip: str, severity: str, log_time: str | None = None):
+
+def _send_email_in_thread(email_func, *args, **kwargs):
+    """Wrapper function để chạy email function trong thread riêng"""
+    try:
+        email_func(*args, **kwargs)
+    except Exception as e:
+        error_msg = f"Lỗi khi gửi email: {str(e)}"
+        print(f"❌ {error_msg}")
+
+
+def _send_attack_alert_sync(attack_type: str, src_ip: str, severity: str, log_time: str | None = None):
+    """Hàm gửi email đồng bộ (chạy trong thread)"""
     if log_time is None:
         log_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -138,7 +150,20 @@ def send_attack_alert(attack_type: str, src_ip: str, severity: str, log_time: st
 
     print(f"📧 Cảnh báo '{attack_type}' đã được gửi tới {RECEIVER_EMAIL}!")
 
-def send_malware_alert(malware_type: str, severity: str, log_time: str | None = None):
+
+def send_attack_alert(attack_type: str, src_ip: str, severity: str, log_time: str | None = None):
+    """Gửi email cảnh báo tấn công trong thread riêng (không block)"""
+    thread = threading.Thread(
+        target=_send_email_in_thread,
+        args=(_send_attack_alert_sync, attack_type, src_ip, severity, log_time),
+        daemon=True  # Thread sẽ tự động kết thúc khi chương trình chính kết thúc
+    )
+    thread.start()
+    # Thread sẽ tự cleanup khi hoàn thành
+
+
+def _send_malware_alert_sync(malware_type: str, severity: str, log_time: str | None = None):
+    """Hàm gửi email đồng bộ (chạy trong thread)"""
     if log_time is None:
         log_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -248,3 +273,14 @@ def send_malware_alert(malware_type: str, severity: str, log_time: str | None = 
         server.send_message(msg)
 
     print("📧 Đã gửi email cảnh báo mã độc!")
+
+
+def send_malware_alert(malware_type: str, severity: str, log_time: str | None = None):
+    """Gửi email cảnh báo mã độc trong thread riêng (không block)"""
+    thread = threading.Thread(
+        target=_send_email_in_thread,
+        args=(_send_malware_alert_sync, malware_type, severity, log_time),
+        daemon=True  # Thread sẽ tự động kết thúc khi chương trình chính kết thúc
+    )
+    thread.start()
+    # Thread sẽ tự cleanup khi hoàn thành
