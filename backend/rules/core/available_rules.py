@@ -75,10 +75,16 @@ def save_meta(meta):
     with open(META_FILE, "w") as f:
         json.dump(meta, f, indent=4)
 
-def run_cmd(cmd: List[str]):
+def run_cmd(cmd: List[str], timeout: int = 10):
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         return res
+    except subprocess.TimeoutExpired:
+        class _E:
+            returncode = 124  # Exit code for timeout
+            stdout = ""
+            stderr = f"Command timeout after {timeout} seconds"
+        return _E()
     except Exception as e:
         class _E:
             returncode = 255
@@ -100,145 +106,192 @@ class AvailableRules(QObject):
     RULE_GROUPS = {
         "ICMP Flood": {
             "group": "ICMP Flood",
+            "chain": "ICMP_FLOOD",
+            "target_chain": "INPUT",
             "rules": [
-                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
+                # Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "ICMP_FLOOD"],
+                ["sudo", "iptables", "-X", "ICMP_FLOOD"],
+                ["sudo", "iptables", "-N", "ICMP_FLOOD"],
+                # Rules trong chain
+                ["sudo", "iptables", "-A", "ICMP_FLOOD", "-p", "icmp", "--icmp-type", "echo-request",
                 "-m", "limit", "--limit", "5/second", "-j", "ACCEPT"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
+                ["sudo", "iptables", "-A", "ICMP_FLOOD", "-p", "icmp", "--icmp-type", "echo-request",
                 "-j", "LOG", "--log-prefix", "PING_FLOOD: "],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request",
-                "-j", "DROP"]
+                ["sudo", "iptables", "-A", "ICMP_FLOOD", "-p", "icmp", "--icmp-type", "echo-request",
+                "-j", "DROP"],
+                # Gắn chain vào INPUT
+                ["sudo", "iptables", "-A", "INPUT", "-p", "icmp", "--icmp-type", "echo-request", "-j", "ICMP_FLOOD"]
             ]
         },
         "SYN Flood": {
             "group": "SYN Flood",
+            "chain": "SYN_FLOOD",
+            "target_chain": "INPUT",
             "rules": [
-                # ["sudo", "iptables", "-N", "SYN_PROTECT"],
-                # ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "SYN_PROTECT"],
-                # ["sudo", "iptables", "-A", "SYN_PROTECT", "-m", "hashlimit",
-                #  "--hashlimit-name", "synflood", "--hashlimit-above", "10/sec",
-                #  "--hashlimit-burst", "20", "--hashlimit-mode", "srcip",
-                #  "--hashlimit-htable-expire", "300000", "-j", "DROP"],
-                # ["sudo", "iptables", "-A", "SYN_PROTECT", "-j", "RETURN"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-m", "limit", "--limit", "10/s", "--limit-burst", "20", "-j", "ACCEPT"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "LOG", "--log-prefix", '"SYN_FLOOD: "'],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "DROP"]
+                # Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "SYN_FLOOD"],
+                ["sudo", "iptables", "-X", "SYN_FLOOD"],
+                ["sudo", "iptables", "-N", "SYN_FLOOD"],
+                # Rules trong chain
+                ["sudo", "iptables", "-A", "SYN_FLOOD", "-p", "tcp", "--syn", "-m", "limit", "--limit", "10/s", "--limit-burst", "20", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "SYN_FLOOD", "-p", "tcp", "--syn", "-j", "LOG", "--log-prefix", '"SYN_FLOOD: "'],
+                ["sudo", "iptables", "-A", "SYN_FLOOD", "-p", "tcp", "--syn", "-j", "DROP"],
+                # Gắn chain vào INPUT
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--syn", "-j", "SYN_FLOOD"]
             ]
         },
         "Port Scan": {
             "group": "PORT_SCAN",
+            "chain": "PORT_SCAN",
+            "target_chain": "INPUT",
             "rules": [
-                # 1️⃣ Tạo chain mới (xóa nếu đã tồn tại)
+                # Tạo chain mới (xóa nếu đã tồn tại)
                 ["sudo", "iptables", "-F", "PORT_SCAN"],
                 ["sudo", "iptables", "-X", "PORT_SCAN"],
                 ["sudo", "iptables", "-N", "PORT_SCAN"],
-
-                # 2️⃣ Log giới hạn 2 lần/phút để tránh log flood
+                # Log giới hạn 2 lần/phút để tránh log flood
                 ["sudo", "iptables", "-A", "PORT_SCAN", "-m", "limit", "--limit", "2/min",
                 "-j", "LOG", "--log-prefix", "PORT_SCAN: ", "--log-level", "4"],
-
-                # 3️⃣ Drop toàn bộ gói bị nghi ngờ
+                # Drop toàn bộ gói bị nghi ngờ
                 ["sudo", "iptables", "-A", "PORT_SCAN", "-j", "DROP"],
-
-                # 4️⃣ Gắn các rule phát hiện đặc trưng của Port Scan
+                # Gắn các rule phát hiện đặc trưng của Port Scan vào INPUT
                 ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "PORT_SCAN"],          # NULL scan
                 ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "ALL", "-j", "PORT_SCAN"],          # XMAS scan
                 ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "FIN,URG,PSH", "-j", "PORT_SCAN"],  # Xmas variation
                 ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN,RST", "-j", "PORT_SCAN"],  # SYN/RST scan
                 ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,FIN", "SYN,FIN", "-j", "PORT_SCAN"],  # SYN/FIN scan
-
-                # 5️⃣ Chặn gói UDP nghi ngờ (kích thước nhỏ bất thường)
+                # Chặn gói UDP nghi ngờ (kích thước nhỏ bất thường)
                 ["sudo", "iptables", "-A", "INPUT", "-p", "udp", "-m", "length", "--length", "0:28", "-j", "DROP"],
             ]
         },
         "IP Spoofing": {
             "group": "IP Spoofing",
+            "chain": "IP_SPOOFING",
+            "target_chain": "INPUT",
             "rules": [
-                ["sudo", "iptables", "-A", "INPUT", "-s", "10.0.0.0/8", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-s", "172.16.0.0/12", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-s", "192.168.0.0/16", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-s", "127.0.0.0/8", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-s", "169.254.0.0/16", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-s", "224.0.0.0/4", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-s", "240.0.0.0/5", "-j", "DROP"],
+                # Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "IP_SPOOFING"],
+                ["sudo", "iptables", "-X", "IP_SPOOFING"],
+                ["sudo", "iptables", "-N", "IP_SPOOFING"],
+                # Rules trong chain
+                ["sudo", "iptables", "-A", "IP_SPOOFING", "-s", "10.0.0.0/8", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "IP_SPOOFING", "-s", "172.16.0.0/12", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "IP_SPOOFING", "-s", "192.168.0.0/16", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "IP_SPOOFING", "-s", "127.0.0.0/8", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "IP_SPOOFING", "-s", "169.254.0.0/16", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "IP_SPOOFING", "-s", "224.0.0.0/4", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "IP_SPOOFING", "-s", "240.0.0.0/5", "-j", "DROP"],
+                # Gắn chain vào INPUT
+                ["sudo", "iptables", "-A", "INPUT", "-j", "IP_SPOOFING"]
             ]
         },
         "Invalid Packet": {
             "group": "Invalid Packet",
+            "chain": "INVALID_PKT",
+            "target_chain": "INPUT",
             "rules": [
-                ["sudo", "iptables", "-A", "INPUT", "-m", "conntrack", "--ctstate", "INVALID",
+                # Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "INVALID_PKT"],
+                ["sudo", "iptables", "-X", "INVALID_PKT"],
+                ["sudo", "iptables", "-N", "INVALID_PKT"],
+                # Rules trong chain
+                ["sudo", "iptables", "-A", "INVALID_PKT", "-m", "conntrack", "--ctstate", "INVALID",
                  "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "INVALID_PKT: "],
-                ["sudo", "iptables", "-A", "INPUT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "INVALID_PKT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "DROP"],
+                # Gắn chain vào INPUT
+                ["sudo", "iptables", "-A", "INPUT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "INVALID_PKT"]
             ]
         },
         "Broadcast Control": {
             "group": "Broadcast Control",
+            "chain": "BROADCAST_CTRL",
+            "target_chain": "INPUT",
             "rules": [
-                ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast",
+                # Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "BROADCAST_CTRL"],
+                ["sudo", "iptables", "-X", "BROADCAST_CTRL"],
+                ["sudo", "iptables", "-N", "BROADCAST_CTRL"],
+                # Rules trong chain
+                ["sudo", "iptables", "-A", "BROADCAST_CTRL", "-m", "pkttype", "--pkt-type", "broadcast",
                  "-m", "limit", "--limit", "10/s", "--limit-burst", "20", "-j", "ACCEPT"],
-                ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast",
+                ["sudo", "iptables", "-A", "BROADCAST_CTRL", "-m", "pkttype", "--pkt-type", "broadcast",
                  "-m", "limit", "--limit", "2/min", "-j", "LOG", "--log-prefix", "BROADCAST_PKT: "],
-                ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "BROADCAST_CTRL", "-m", "pkttype", "--pkt-type", "broadcast", "-j", "DROP"],
+                # Gắn chain vào INPUT
+                ["sudo", "iptables", "-A", "INPUT", "-m", "pkttype", "--pkt-type", "broadcast", "-j", "BROADCAST_CTRL"]
             ]
         },
         "Outbound Protection": {
             "group": "Outbound Protection",
+            "chain": "OUTBOUND_PROTECT",
+            "target_chain": "OUTPUT",
             "rules": [
-                ["sudo", "iptables", "-A", "OUTPUT", "-s", "10.0.0.0/8", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "OUTPUT", "-s", "172.16.0.0/12", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "OUTPUT", "-s", "192.168.0.0/16", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "OUTPUT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "DROP"],
+                # Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "OUTBOUND_PROTECT"],
+                ["sudo", "iptables", "-X", "OUTBOUND_PROTECT"],
+                ["sudo", "iptables", "-N", "OUTBOUND_PROTECT"],
+                # Rules trong chain
+                ["sudo", "iptables", "-A", "OUTBOUND_PROTECT", "-s", "10.0.0.0/8", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "OUTBOUND_PROTECT", "-s", "172.16.0.0/12", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "OUTBOUND_PROTECT", "-s", "192.168.0.0/16", "-j", "DROP"],
+                ["sudo", "iptables", "-A", "OUTBOUND_PROTECT", "-m", "conntrack", "--ctstate", "INVALID", "-j", "DROP"],
+                # Gắn chain vào OUTPUT
+                ["sudo", "iptables", "-A", "OUTPUT", "-j", "OUTBOUND_PROTECT"]
             ]
         },
         "FIN/XMAS/NULL Scan": {
             "group": "FIN/XMAS/NULL Scan",
+            "chain": "FIN_XMAS_NULL_SCAN",
+            "target_chain": "INPUT",
             "rules": [
+                # Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "FIN_XMAS_NULL_SCAN"],
+                ["sudo", "iptables", "-X", "FIN_XMAS_NULL_SCAN"],
+                ["sudo", "iptables", "-N", "FIN_XMAS_NULL_SCAN"],
                 # FIN scan
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN", "-m", "limit", "--limit", "2/min",
+                ["sudo", "iptables", "-A", "FIN_XMAS_NULL_SCAN", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN", "-m", "limit", "--limit", "2/min",
                 "-j", "LOG", "--log-prefix", "FIN_SCAN: ", "--log-level", "4"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN", "-j", "DROP"],
-
+                ["sudo", "iptables", "-A", "FIN_XMAS_NULL_SCAN", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN", "-j", "DROP"],
                 # XMAS scan
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "FIN,PSH,URG", "FIN,PSH,URG", "-m", "limit", "--limit", "2/min",
+                ["sudo", "iptables", "-A", "FIN_XMAS_NULL_SCAN", "-p", "tcp", "--tcp-flags", "FIN,PSH,URG", "FIN,PSH,URG", "-m", "limit", "--limit", "2/min",
                 "-j", "LOG", "--log-prefix", "XMAS_SCAN: ", "--log-level", "4"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "FIN,PSH,URG", "FIN,PSH,URG", "-j", "DROP"],
-
+                ["sudo", "iptables", "-A", "FIN_XMAS_NULL_SCAN", "-p", "tcp", "--tcp-flags", "FIN,PSH,URG", "FIN,PSH,URG", "-j", "DROP"],
                 # NULL scan
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-m", "limit", "--limit", "2/min",
+                ["sudo", "iptables", "-A", "FIN_XMAS_NULL_SCAN", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-m", "limit", "--limit", "2/min",
                 "-j", "LOG", "--log-prefix", "NULL_SCAN: ", "--log-level", "4"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "DROP"],
-
-                # Tạo chain FIN_PROTECT
-                ["sudo", "iptables", "-N", "FIN_PROTECT"],
-                ["sudo", "iptables", "-A", "FIN_PROTECT", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN",
-                "-m", "recent", "--name", "FIN_SCAN", "--set", "--rsource",
-                "-j", "LOG", "--log-prefix", "FIN_SET: "],
-                ["sudo", "iptables", "-A", "FIN_PROTECT", "-p", "tcp", "--tcp-flags", "FIN,SYN,RST,PSH", "FIN",
-                "-m", "recent", "--name", "FIN_SCAN", "--rcheck", "--seconds", "60", "--hitcount", "5", "--rsource", "-j", "DROP"],
-                ["sudo", "iptables", "-I", "INPUT", "-j", "FIN_PROTECT"],
+                ["sudo", "iptables", "-A", "FIN_XMAS_NULL_SCAN", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "DROP"],
+                # Gắn chain vào INPUT
+                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "-j", "FIN_XMAS_NULL_SCAN"]
             ]
         },
         "SSH/FTP Brute Force": {
             "group": "SSH/FTP Brute Force",
+            "chain": "SSH_FTP_BRUTE",
+            "target_chain": "INPUT",
             "rules": [
+                # Tạo chain mới (xóa nếu đã tồn tại)
+                ["sudo", "iptables", "-F", "SSH_FTP_BRUTE"],
+                ["sudo", "iptables", "-X", "SSH_FTP_BRUTE"],
+                ["sudo", "iptables", "-N", "SSH_FTP_BRUTE"],
                 # SSH brute force
-                ["sudo", "iptables", "-N", "SSH_PROTECT"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "22", "-m", "conntrack", "--ctstate", "NEW",
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "tcp", "--dport", "22", "-m", "conntrack", "--ctstate", "NEW",
                 "-m", "recent", "--name", "SSH_BRUTE", "--update", "--seconds", "60", "--hitcount", "5", "--rttl", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "22", "-m", "conntrack", "--ctstate", "NEW",
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "tcp", "--dport", "22", "-m", "conntrack", "--ctstate", "NEW",
                 "-m", "recent", "--name", "SSH_BRUTE", "--set", "-j", "ACCEPT"],
-
                 # FTP brute force
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "21", "-m", "conntrack", "--ctstate", "NEW",
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "tcp", "--dport", "21", "-m", "conntrack", "--ctstate", "NEW",
                 "-m", "recent", "--name", "FTP_BRUTE", "--update", "--seconds", "60", "--hitcount", "10", "-j", "DROP"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "21", "-m", "conntrack", "--ctstate", "NEW",
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "tcp", "--dport", "21", "-m", "conntrack", "--ctstate", "NEW",
                 "-m", "recent", "--name", "FTP_BRUTE", "--set", "-j", "ACCEPT"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "50000:51000", "-m", "conntrack", "--ctstate", "NEW", "-j", "ACCEPT"],
-
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "tcp", "--dport", "50000:51000", "-m", "conntrack", "--ctstate", "NEW", "-j", "ACCEPT"],
                 # Cho phép các dịch vụ cơ bản
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "80", "-j", "ACCEPT"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "443", "-j", "ACCEPT"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "udp", "--dport", "53", "-j", "ACCEPT"],
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--dport", "53", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "tcp", "--dport", "80", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "tcp", "--dport", "443", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "udp", "--dport", "53", "-j", "ACCEPT"],
+                ["sudo", "iptables", "-A", "SSH_FTP_BRUTE", "-p", "tcp", "--dport", "53", "-j", "ACCEPT"],
+                # Gắn chain vào INPUT
+                ["sudo", "iptables", "-A", "INPUT", "-j", "SSH_FTP_BRUTE"]
             ]
         },
     }
@@ -304,26 +357,33 @@ class AvailableRules(QObject):
             self.status[group_name] = {"enabled": True, "group": group_meta}
 
         else:
+            # Lấy tên chain từ rule group
+            chain_name = self.RULE_GROUPS[group_name].get("chain")
+            
+            # Bước 1: Xóa tất cả các rule gắn chain vào INPUT/OUTPUT trước
             for cmd in cmds:
                 if "-A" in cmd or "-I" in cmd:
-                    cmd_del = cmd.copy()
-                    cmd_del[cmd_del.index("-A") if "-A" in cmd_del else cmd_del.index("-I")] = "-D"
-                    res = run_cmd(cmd_del)
-                    logs.append(f"DEL: {' '.join(cmd_del)} => {res.returncode}")
-                elif "-N" in cmd:
-                    try:
-                        chain = cmd[cmd.index("-N") + 1]
-                        run_cmd(["sudo", "iptables", "-F", chain])
-                        run_cmd(["sudo", "iptables", "-X", chain])
-                        logs.append(f"FLUSH/DELETE {chain}")
-                    except Exception as e:
-                        logs.append(f"ERR deleting chain: {e}")
-
-                # Xóa rule_key tương ứng trong meta
-                rule_key = make_rule_key_from_cmd(cmd)
-                norm_key = normalize_rule_key(rule_key)
-                if norm_key in meta:
-                    del meta[norm_key]
+                    # Bỏ qua các lệnh tạo chain (-N) và flush chain (-F, -X)
+                    if "-N" not in cmd and "-F" not in cmd and "-X" not in cmd:
+                        cmd_del = cmd.copy()
+                        cmd_del[cmd_del.index("-A") if "-A" in cmd_del else cmd_del.index("-I")] = "-D"
+                        res = run_cmd(cmd_del)
+                        logs.append(f"DEL: {' '.join(cmd_del)} => {res.returncode}")
+                        
+                        # Xóa rule_key tương ứng trong meta
+                        rule_key = make_rule_key_from_cmd(cmd)
+                        norm_key = normalize_rule_key(rule_key)
+                        if norm_key in meta:
+                            del meta[norm_key]
+            
+            # Bước 2: Xóa chain sau khi đã xóa tất cả các rule tham chiếu đến nó
+            if chain_name:
+                try:
+                    run_cmd(["sudo", "iptables", "-F", chain_name])
+                    run_cmd(["sudo", "iptables", "-X", chain_name])
+                    logs.append(f"FLUSH/DELETE chain: {chain_name}")
+                except Exception as e:
+                    logs.append(f"ERR deleting chain {chain_name}: {e}")
 
             self.status[group_name] = {"enabled": False, "group": group_meta}
 

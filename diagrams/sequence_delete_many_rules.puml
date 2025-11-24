@@ -1,0 +1,60 @@
+@startuml DeleteManyRulesSequence
+!theme plain
+autonumber
+
+actor User
+participant "GUI" as GUI
+participant "RulesTableHandlerAPI" as Handler
+participant "API Client" as Client
+participant "Flask Service" as Service
+participant "iptables" as Iptables
+
+User -> GUI: Chọn nhiều rules (checkboxes)
+User -> GUI: Click "Delete Selected"
+
+GUI -> Handler: on_delete_many_clicked()
+Handler -> Handler: Get selected rule numbers\n(nums = ["1", "3", "5"])
+
+Handler -> Client: delete_many_rules(nums)
+Client -> Service: POST /api/rules/delete-many\n{nums: ["1", "3", "5"]}
+
+Service -> Service: get_all_chains_rules()
+Service -> iptables: sudo iptables -L -v -n --line-numbers
+iptables --> Service: All rules
+
+Service -> Service: Build rule_map\n{(chain, num) -> rule}
+
+Service -> Service: Group rules by chain\n{INPUT: [1, 3], OUTPUT: [5]}
+
+loop For each chain
+    Service -> Service: Sort nums descending\n([3, 1] for INPUT)
+    
+    loop For each num in chain
+        Service -> iptables: sudo iptables -D <chain> <num>
+        iptables --> Service: Success/Failure
+        Service -> Service: Track deleted/failed
+    end
+end
+
+Service --> Client: {status: "success", deleted: [...], failed: [...]}
+Client --> Handler: Response
+
+alt Có rules bị xóa thành công
+    Handler -> GUI: refresh_rules_table()
+    GUI -> Client: GET /api/rules/list
+    Client -> Service: GET /api/rules/list
+    Service -> iptables: sudo iptables -L -v -n --line-numbers
+    iptables --> Service: Updated rules
+    Service --> Client: {rules: [...]}
+    Client --> GUI: Updated rules list
+    GUI -> GUI: Update table
+    GUI --> User: Hiển thị rules đã cập nhật
+end
+
+alt Có rules xóa thất bại
+    Handler -> GUI: Show error message
+    GUI --> User: "Một số rules không thể xóa"
+end
+
+@enduml
+

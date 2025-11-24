@@ -1,0 +1,58 @@
+@startuml AddRuleSequence
+!theme plain
+autonumber
+
+actor User
+participant "GUI\n(main_qt_api.py)" as GUI
+participant "AddRuleHandlerAPI" as Handler
+participant "API Client\n(api_client.py)" as Client
+participant "Flask Service\n(firewall_service.py)" as Service
+participant "iptables\n(subprocess)" as Iptables
+participant "Metadata File\n(JSON)" as Meta
+
+User -> GUI: Nhập thông tin rule\n(IP, Port, Protocol, Action, ...)
+User -> GUI: Click "Add Rule"
+
+GUI -> Handler: on_add_rule_in_frame_clicked()
+Handler -> Handler: Validate input\n(Protocol, Action required)
+
+alt Validation thành công
+    Handler -> Client: add_rule(ip, port, protocol, action, ...)
+    Client -> Service: POST /api/rules/add\n{JSON data}
+    
+    Service -> Service: Validate data
+    Service -> Service: Build iptables command
+    
+    Service -> Iptables: sudo iptables -A INPUT ...
+    Iptables --> Service: Success
+    
+    Service -> Iptables: sudo iptables -L INPUT -v -n --line-numbers
+    Iptables --> Service: Rule list
+    
+    Service -> Service: Extract last rule\n(make_rule_key)
+    Service -> Meta: load_meta()
+    Meta --> Service: Current metadata
+    Service -> Service: Add group to metadata
+    Service -> Meta: save_meta(updated_meta)
+    
+    Service --> Client: {status: "success", message: "..."}
+    Client --> Handler: Success response
+    
+    Handler -> GUI: Clear form fields
+    Handler -> GUI: refresh_rules_table()
+    GUI -> Client: GET /api/rules/list
+    Client -> Service: GET /api/rules/list
+    Service -> Iptables: sudo iptables -L -v -n --line-numbers
+    Iptables --> Service: All rules
+    Service --> Client: {rules: [...]}
+    Client --> GUI: Rules list
+    GUI -> GUI: Update rules table
+    
+    GUI --> User: Hiển thị rule mới trong table
+else Validation thất bại
+    Handler -> GUI: Show error message
+    GUI --> User: "Protocol và Action là bắt buộc!"
+end
+
+@enduml
+

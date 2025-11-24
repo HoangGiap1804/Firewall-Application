@@ -97,7 +97,8 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def _init_rules_table(self):
         """Khởi tạo Rules Table Handler sử dụng API"""
-        self.rules_table_handler = RulesTableHandlerAPI(self.ui)
+        # Truyền cả ui và self (MainWindow) để timer có parent đúng
+        self.rules_table_handler = RulesTableHandlerAPI(self.ui, self)
         
         # Kết nối signals
         self.ui.buttonSearch.clicked.connect(self.rules_table_handler.on_search_clicked)

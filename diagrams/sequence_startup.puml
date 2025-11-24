@@ -1,0 +1,70 @@
+@startuml StartupSequence
+!theme plain
+autonumber
+
+actor User
+participant "main_qt_api.py" as Main
+participant "MainWindow" as Window
+participant "API Client" as Client
+participant "Flask Service" as Service
+participant "System Monitor" as Monitor
+participant "Charts Manager" as Charts
+
+User -> Main: python main_qt_api.py
+Main -> Window: __init__()
+
+Window -> Window: Load UI (main.ui)
+Window -> Window: load_all_tabs()
+
+Window -> Client: get_client()
+Client -> Client: Create FirewallServiceClient
+
+Window -> Client: health_check()
+Client -> Service: GET /api/health
+Service --> Client: {status: "ok"}
+Client --> Window: True
+
+alt Service không khả dụng
+    Window -> Window: Show error dialog
+    Window --> User: "Không thể kết nối đến service"
+    Window -> Window: Exit
+end
+
+Window -> Window: _init_log_tab()
+Window -> Window: _init_system_monitor()
+Window -> Monitor: SystemMonitorAPI(ui)
+Monitor -> Monitor: Setup QTimer (2s interval)
+
+Window -> Charts: setup_charts(ui, monitor)
+Charts -> Charts: Create sandbox charts
+Charts -> Charts: Create host charts
+
+Window -> Window: _init_rules_table()
+Window -> Window: _init_add_rule()
+Window -> Window: _init_available_rules()
+
+Window -> Client: start_monitoring()
+Client -> Service: POST /api/monitoring/start
+Service -> Service: Start monitoring thread
+Service --> Client: {status: "started"}
+
+Window -> Window: show()
+Window --> User: Display main window
+
+== Background Operations ==
+par Monitoring thread starts
+    Service -> Service: monitoring_loop()
+    Service -> Service: update_monitoring() every 2s
+end
+
+par GUI refresh timers
+    Monitor -> Monitor: Update stats every 2s
+    Monitor -> Client: get_monitoring_data()
+    Client -> Service: GET /api/monitoring/data
+    Service --> Client: monitoring_data
+    Client --> Monitor: Data
+    Monitor -> Charts: Update charts
+end
+
+@enduml
+

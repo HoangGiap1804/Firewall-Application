@@ -10,15 +10,19 @@ from service.api_client import get_client
 class RulesTableHandlerAPI:
     """Xử lý logic cho bảng hiển thị rules sử dụng API"""
     
-    def __init__(self, ui):
+    def __init__(self, ui, parent=None):
         """
         Args:
             ui: UI object từ uic.loadUi
+            parent: Parent QObject cho timer (thường là MainWindow instance)
         """
         self.ui = ui
         self.client = get_client()
         self.current_filter = ""
-        self.refresh_timer = QTimer()
+        # Timer cần parent để không bị garbage collected
+        # Nếu không có parent, dùng ui làm parent
+        timer_parent = parent if parent else ui
+        self.refresh_timer = QTimer(timer_parent)
         self.refresh_timer.timeout.connect(self.refresh_rules_table)
         self.refresh_timer.start(1500)  # Refresh mỗi 1.5 giây
     
@@ -26,22 +30,31 @@ class RulesTableHandlerAPI:
         """Lấy danh sách rule từ API và hiển thị trên tableRules"""
         try:
             rules = self.client.list_rules()
+            # Debug: in số lượng rules và chains
+            if rules:
+                chains = set(r.get("chain", "INPUT") for r in rules)
+                print(f"Đã lấy {len(rules)} rule(s) từ {len(chains)} chain(s): {', '.join(sorted(chains))}")
         except Exception as e:
             print(f"Lỗi khi lấy danh sách rules: {e}")
+            import traceback
+            traceback.print_exc()
             return
         
         filter_text = self.current_filter.lower().strip()
         table = self.ui.tableRules
         
-        # Save the state of checked checkboxes
-        checked_nums = set()
+        # Save the state of checked checkboxes (lưu theo chain+num vì num có thể trùng nhau giữa các chains)
+        checked_rules = set()
         delete_col = table.columnCount() - 1 if table.columnCount() > 0 else 12
+        chain_col = 10  # Cột chain
         for row in range(table.rowCount()):
             chk_item = table.item(row, delete_col)
             if chk_item and chk_item.checkState() == Qt.CheckState.Checked:
                 num_item = table.item(row, 0)
-                if num_item:
-                    checked_nums.add(num_item.text())
+                chain_item = table.item(row, chain_col)
+                if num_item and chain_item:
+                    # Lưu theo format "chain:num" để tránh trùng lặp
+                    checked_rules.add(f"{chain_item.text()}:{num_item.text()}")
         
         table.setRowCount(0)
         table.setColumnCount(13)
@@ -51,7 +64,8 @@ class RulesTableHandlerAPI:
         ]
         table.setHorizontalHeaderLabels(headers)
 
-        for row_index, rule in enumerate(rules):
+        row_index = 0
+        for rule in rules:
             # Chain filtering
             chain = rule.get("chain", "INPUT")
             
@@ -83,12 +97,15 @@ class RulesTableHandlerAPI:
             chk_item = QTableWidgetItem()
             chk_item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
 
-            # Restore checked state if previously checked
-            if rule["num"] in checked_nums:
+            # Restore checked state if previously checked (kiểm tra theo chain:num)
+            rule_key = f"{chain}:{rule['num']}"
+            if rule_key in checked_rules:
                 chk_item.setCheckState(Qt.CheckState.Checked)
             else:
                 chk_item.setCheckState(Qt.CheckState.Unchecked)
             table.setItem(row_index, 12, chk_item)
+            
+            row_index += 1
 
         table.resizeColumnsToContents()
     
@@ -101,43 +118,67 @@ class RulesTableHandlerAPI:
     
     def on_delete_many_clicked(self):
         """Xoá rule đã tick hoặc theo chain"""
-        table = self.ui.tableRules
-        selected_nums = []
+        # Tạm dừng refresh timer để tránh race condition
+        self.refresh_timer.stop()
+        
+        try:
+            table = self.ui.tableRules
+            selected_nums = []
 
-        delete_col = table.columnCount() - 1
+            delete_col = table.columnCount() - 1
 
-        # Lấy danh sách rule đã tick
-        for row in range(table.rowCount()):
-            chk_item = table.item(row, delete_col)
-            if chk_item and chk_item.checkState() == Qt.CheckState.Checked:
-                num_item = table.item(row, 0)
-                if num_item:
-                    selected_nums.append(num_item.text())
+            # Lấy danh sách rule đã tick (lưu cả chain và num)
+            chain_col = 10  # Cột chain
+            selected_rules = []  # List of (chain, num) tuples
+            for row in range(table.rowCount()):
+                chk_item = table.item(row, delete_col)
+                if chk_item and chk_item.checkState() == Qt.CheckState.Checked:
+                    num_item = table.item(row, 0)
+                    chain_item = table.item(row, chain_col)
+                    if num_item and chain_item:
+                        selected_rules.append((chain_item.text(), num_item.text()))
 
-        if selected_nums:
-            print(f"Deleting {len(selected_nums)} chosen rule(s)...")
-            try:
-                result = self.client.delete_many_rules(selected_nums)
-                print(f"✅ Đã xóa {len(result.get('deleted', []))} rule(s)")
-                if result.get('failed'):
-                    print(f"❌ Không thể xóa {len(result['failed'])} rule(s)")
-            except Exception as e:
-                QMessageBox.warning(None, "Lỗi", f"Không thể xóa rules: {e}")
-        else:
-            chain_name = self.ui.editRules.text().strip()
-            if chain_name:
-                print(f"No chosen rule, deleting by chain: {chain_name}")
-                # Lấy tất cả rules của chain và xóa
+            if selected_rules:
+                # Lấy tất cả rules từ API để map chain+num thành num thực tế
                 try:
-                    rules = self.client.list_rules()
-                    chain_rules = [r["num"] for r in rules if r.get("chain", "INPUT").upper() == chain_name.upper()]
-                    if chain_rules:
-                        result = self.client.delete_many_rules(chain_rules)
-                        print(f"✅ Đã xóa {len(result.get('deleted', []))} rule(s) từ chain {chain_name}")
+                    all_rules = self.client.list_rules()
+                    rule_map = {}  # Map (chain, num) -> actual rule
+                    for r in all_rules:
+                        rule_map[(r.get("chain", "INPUT"), r["num"])] = r
+                    
+                    # Lấy nums từ selected_rules
+                    selected_nums = []
+                    for chain, num in selected_rules:
+                        if (chain, num) in rule_map:
+                            selected_nums.append(num)
+                    
+                    if selected_nums:
+                        print(f"Deleting {len(selected_nums)} chosen rule(s)...")
+                        result = self.client.delete_many_rules(selected_nums)
+                        print(f"✅ Đã xóa {len(result.get('deleted', []))} rule(s)")
+                        if result.get('failed'):
+                            print(f"❌ Không thể xóa {len(result['failed'])} rule(s)")
                 except Exception as e:
-                    QMessageBox.warning(None, "Lỗi", f"Không thể xóa rules theo chain: {e}")
+                    QMessageBox.warning(None, "Lỗi", f"Không thể xóa rules: {e}")
             else:
-                print("No chosen rule and no chain name provided.")
+                chain_name = self.ui.editRules.text().strip()
+                if chain_name:
+                    print(f"No chosen rule, deleting by chain: {chain_name}")
+                    # Lấy tất cả rules của chain và xóa
+                    try:
+                        rules = self.client.list_rules()
+                        chain_rules = [r["num"] for r in rules if r.get("chain", "INPUT").upper() == chain_name.upper()]
+                        if chain_rules:
+                            result = self.client.delete_many_rules(chain_rules)
+                            print(f"✅ Đã xóa {len(result.get('deleted', []))} rule(s) từ chain {chain_name}")
+                    except Exception as e:
+                        QMessageBox.warning(None, "Lỗi", f"Không thể xóa rules theo chain: {e}")
+                else:
+                    print("No chosen rule and no chain name provided.")
 
-        self.refresh_rules_table()
+            # Refresh sau khi xóa xong
+            self.refresh_rules_table()
+        finally:
+            # Khởi động lại timer
+            self.refresh_timer.start(1500)
 

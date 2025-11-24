@@ -1,0 +1,57 @@
+@startuml UseCaseDiagram
+!theme plain
+skinparam actorStyle awesome
+skinparam rectangle {
+    BackgroundColor LightBlue
+}
+
+actor User as user
+actor "System Monitor" as monitor
+actor "Firewall Service" as service
+
+rectangle "Firewall Management System" {
+  rectangle "Firewall Rules Management" {
+    usecase "UC-01: Xem danh sách Rules" as UC01
+    usecase "UC-02: Thêm Rule mới" as UC02
+    usecase "UC-03: Xóa Rule" as UC03
+    usecase "UC-04: Tìm kiếm Rules" as UC04
+    usecase "UC-05: Quản lý Available Rules" as UC05
+  }
+  
+  rectangle "System Monitoring" {
+    usecase "UC-06: Xem biểu đồ Monitoring" as UC06
+    usecase "UC-07: Xem thống kê tài nguyên" as UC07
+    usecase "UC-08: Phát hiện Anomaly" as UC08
+    usecase "UC-09: Nhận cảnh báo" as UC09
+  }
+  
+  rectangle "Log Management" {
+    usecase "UC-10: Xem Logs" as UC10
+  }
+}
+
+user --> UC01
+user --> UC02
+user --> UC03
+user --> UC04
+user --> UC05
+user --> UC06
+user --> UC07
+user --> UC09
+user --> UC10
+
+monitor --> UC08
+monitor --> UC09
+
+service --> UC01
+service --> UC02
+service --> UC03
+service --> UC04
+service --> UC06
+service --> UC07
+service --> UC08
+
+UC08 ..> UC09 : <<triggers>>
+
+@enduml
+

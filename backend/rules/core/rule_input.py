@@ -115,6 +115,104 @@ def get_input_rules():
         return []
 
 
+def get_all_chains_rules():
+    """Lấy rules từ tất cả các chains (INPUT, OUTPUT, FORWARD và các custom chains)"""
+    all_rules = []
+    
+    try:
+        # Lấy danh sách tất cả các chains
+        result = subprocess.run(
+            ["sudo", "iptables", "-L"],
+            capture_output=True, text=True, check=True
+        )
+        
+        lines = result.stdout.splitlines()
+        chains = []
+        
+        # Parse để lấy danh sách chains
+        for line in lines:
+            if line.startswith("Chain "):
+                parts = line.split()
+                if len(parts) >= 2:
+                    chain_name = parts[1]
+                    chains.append(chain_name)
+        
+        # Lấy rules từ mỗi chain
+        for chain_name in chains:
+            try:
+                result = subprocess.run(
+                    ["sudo", "iptables", "-L", chain_name, "-v", "-n", "--line-numbers"],
+                    capture_output=True, text=True, check=True
+                )
+                chain_lines = result.stdout.splitlines()
+                
+                # Tìm dòng header để biết bắt đầu từ đâu
+                header_found = False
+                start_idx = 0
+                for idx, line in enumerate(chain_lines):
+                    line_lower = line.lower()
+                    if "num" in line_lower and "pkts" in line_lower and "target" in line_lower:
+                        header_found = True
+                        start_idx = idx + 1
+                        break
+                
+                if not header_found:
+                    # Nếu không tìm thấy header, thử bỏ qua 2 dòng đầu (Chain header và empty line)
+                    start_idx = 2
+                
+                chain_rule_count = 0
+                for line in chain_lines[start_idx:]:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    
+                    parts = line.split()
+                    # Cần ít nhất 10 phần tử: num, pkts, bytes, target, prot, opt, in, out, source, destination
+                    if len(parts) < 10:
+                        continue
+                    
+                    # Kiểm tra xem phần tử đầu tiên có phải là số (line number) không
+                    # Line number luôn là số nguyên dương
+                    if not parts[0].isdigit():
+                        continue
+                    
+                    try:
+                        rule_key = " ".join(parts[3:])
+                        rule = {
+                            "num": parts[0],
+                            "pkts": parts[1],
+                            "bytes": parts[2],
+                            "target": parts[3],
+                            "prot": parts[4],
+                            "opt": parts[5],
+                            "in_": parts[6] if len(parts) > 6 else "*",
+                            "out": parts[7] if len(parts) > 7 else "*",
+                            "source": parts[8] if len(parts) > 8 else "0.0.0.0/0",
+                            "destination": parts[9] if len(parts) > 9 else "0.0.0.0/0",
+                            "rule_key": rule_key,
+                            "chain": chain_name
+                        }
+                        all_rules.append(rule)
+                        chain_rule_count += 1
+                    except (IndexError, ValueError) as e:
+                        # Bỏ qua dòng không parse được
+                        print(f"Lỗi parse rule trong chain {chain_name}: {line[:50]}... - {e}")
+                        continue
+                
+                # Debug: in số lượng rules đã lấy từ mỗi chain
+                if chain_rule_count > 0:
+                    print(f"Đã lấy {chain_rule_count} rule(s) từ chain {chain_name}")
+            except subprocess.CalledProcessError as e:
+                # Bỏ qua chain nếu không lấy được
+                print(f"Lỗi lấy rules từ chain {chain_name}: {e}")
+                continue
+        
+        return all_rules
+    except subprocess.CalledProcessError as e:
+        print(f"Lỗi lấy danh sách chains: {e}")
+        return []
+
+
 class IptablesModel(QAbstractListModel):
     """Model quản lý rule INPUT chain."""
 
@@ -222,7 +320,7 @@ class IptablesModel(QAbstractListModel):
             print("Chain rỗng.")
             return
 
-        all_rules = get_input_rules()
+        all_rules = get_all_chains_rules()
         # Lọc rules theo chain
         rules_to_delete = [
             r for r in all_rules 

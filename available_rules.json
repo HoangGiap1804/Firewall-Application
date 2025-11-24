@@ -4,11 +4,11 @@
         "group": "ICMP Flood"
     },
     "SYN Flood": {
-        "enabled": false,
+        "enabled": true,
         "group": "SYN Flood"
     },
     "Port Scan": {
-        "enabled": false,
+        "enabled": true,
         "group": "PORT_SCAN"
     },
     "IP Spoofing": {

@@ -82,7 +82,6 @@ class SystemMonitor(QObject):
             if self.prev_ram > 0:
                 diff_mb = (used_bytes - self.prev_ram) / (1024 ** 2)
                 if diff_mb > self.RAM_SPIKE_MB:
-                    self.show_alert(f"RAM tăng đột biến: +{diff_mb:.1f} MB")
                     send_malware_alert(
                         malware_type="Trojan.Generic",
                         severity="high"
@@ -316,11 +315,9 @@ class SystemMonitor(QObject):
             running = len([l for l in result.stdout.splitlines() if ".service" in l])
 
             label = self.ui.findChild(QLabel, "label_service")
-
             now = time.time()
             if running > 10:
                 if now - self.last_service_alert_time >= self.SERVICE_ALERT_COOLDOWN:
-                    self.show_alert("Service lạ phát hiện")
                     self.last_service_alert_time = now  # cập nhật lại thời điểm gửi cảnh báo
                     send_malware_alert(
                         malware_type="Service",

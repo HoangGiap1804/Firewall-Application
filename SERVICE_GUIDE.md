@@ -69,6 +69,12 @@ sudo ./install_service.sh start
 # Dừng service
 sudo ./install_service.sh stop
 
+# Restart service (load code mới) ⭐ QUAN TRỌNG
+sudo ./install_service.sh restart
+
+# Reload service và config
+sudo ./install_service.sh reload
+
 # Xem trạng thái
 sudo ./install_service.sh status
 
@@ -78,6 +84,17 @@ sudo ./install_service.sh logs
 # Gỡ cài đặt
 sudo ./install_service.sh uninstall
 ```
+
+### ⚠️ Sau khi sửa code backend
+
+**Sau khi sửa code trong `backend/` hoặc `service/`, bạn PHẢI restart service để load code mới:**
+
+```bash
+cd /home/nqim/PBL6/service
+sudo ./install_service.sh restart
+```
+
+Xem chi tiết trong [UPDATE_SERVICE.md](service/UPDATE_SERVICE.md)
 
 ### Chạy service thủ công (không dùng systemd)
 

@@ -18,7 +18,7 @@ import re
 # Thêm thư mục gốc vào path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.rules.core import get_input_rules, get_group_map, normalize_rule_key
+from backend.rules.core.rule_input import get_input_rules, get_all_chains_rules, get_group_map, normalize_rule_key
 from backend.rules.core.add_rule import IptablesHandler, load_meta, save_meta, make_rule_key
 from backend.notifications import send_malware_alert
 
@@ -208,7 +208,7 @@ def update_monitoring():
             result = subprocess.run(
                 ["sudo", "machinectl", "shell", f"root@{CONTAINER_NAME}",
                  "/bin/systemctl", "list-units", "--type=service", "--state=running", "--no-pager"],
-                capture_output=True, text=True
+                capture_output=True, text=True, timeout=5
             )
             running = len([l for l in result.stdout.splitlines() if ".service" in l])
             monitoring_data["services_count"] = running
@@ -279,17 +279,26 @@ def get_monitoring_data():
 
 @app.route('/api/rules/list', methods=['GET'])
 def list_rules():
-    """Lấy danh sách rules"""
+    """Lấy danh sách rules từ tất cả các chains"""
     try:
-        rules = get_input_rules()
+        rules = get_all_chains_rules()
         group_map = get_group_map()
         # Thêm group vào mỗi rule
         for rule in rules:
             rule_key = rule.get("rule_key", "")
             normalized_key = normalize_rule_key(rule_key)
             rule["group"] = group_map.get(normalized_key, "None")
+        
+        # Debug: in số lượng rules và chains
+        if rules:
+            chains = set(r.get("chain", "INPUT") for r in rules)
+            print(f"[API] Trả về {len(rules)} rule(s) từ {len(chains)} chain(s): {', '.join(sorted(chains))}")
+        
         return jsonify({"rules": rules})
     except Exception as e:
+        import traceback
+        print(f"[API] Lỗi khi lấy rules: {e}")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 
@@ -320,12 +329,12 @@ def add_rule():
             cmd += ["-m", "state", "--state", state]
         cmd += ["-j", action]
         
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, timeout=10)
         
         # Lưu metadata
         result = subprocess.run(
             ["sudo", "iptables", "-L", "INPUT", "-v", "-n", "--line-numbers"],
-            capture_output=True, text=True, check=True
+            capture_output=True, text=True, check=True, timeout=5
         )
         lines = [l for l in result.stdout.splitlines()[2:] if l.strip()]
         if lines:
@@ -353,7 +362,7 @@ def delete_rule():
             return jsonify({"error": "Num phải là số"}), 400
         
         cmd = ["sudo", "iptables", "-D", "INPUT", num]
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, timeout=5)
         return jsonify({"status": "success", "message": f"Đã xóa rule số {num}"})
     except subprocess.CalledProcessError as e:
         return jsonify({"error": f"Lỗi khi xóa rule: {e}"}), 500
@@ -363,22 +372,62 @@ def delete_rule():
 
 @app.route('/api/rules/delete-many', methods=['POST'])
 def delete_many_rules():
-    """Xóa nhiều rules"""
+    """Xóa nhiều rules từ các chains khác nhau"""
     try:
         data = request.json
         nums = data.get("nums", [])
         if not nums:
             return jsonify({"error": "Danh sách nums rỗng"}), 400
         
+        # Lấy danh sách tất cả rules để tìm chain của mỗi rule
+        # Sửa bug: map (chain, num) -> rule thay vì num -> chain để tránh ghi đè
+        all_rules = get_all_chains_rules()
+        rule_map = {}  # Map (chain, num) -> rule
+        for rule in all_rules:
+            chain = rule.get("chain", "INPUT")
+            num = rule["num"]
+            rule_map[(chain, num)] = rule
+        
         deleted = []
         failed = []
-        for num in sorted(nums, reverse=True):
-            try:
-                cmd = ["sudo", "iptables", "-D", "INPUT", str(num)]
-                subprocess.run(cmd, check=True)
-                deleted.append(num)
-            except:
-                failed.append(num)
+        
+        # Group rules by chain để xóa hiệu quả hơn
+        rules_by_chain = {}
+        for num in nums:
+            # Tìm rule có num này (có thể có nhiều rules cùng num ở các chains khác nhau)
+            found = False
+            for (chain, rule_num), rule in rule_map.items():
+                if rule_num == num:
+                    if chain not in rules_by_chain:
+                        rules_by_chain[chain] = []
+                    rules_by_chain[chain].append(num)
+                    found = True
+                    break
+            if not found:
+                # Nếu không tìm thấy, thử với INPUT chain (fallback)
+                if "INPUT" not in rules_by_chain:
+                    rules_by_chain["INPUT"] = []
+                rules_by_chain["INPUT"].append(num)
+        
+        # Xóa rules theo từng chain, sắp xếp num giảm dần
+        for chain, chain_nums in rules_by_chain.items():
+            # Loại bỏ duplicate và sắp xếp
+            unique_nums = sorted(set(chain_nums), key=lambda x: int(x), reverse=True)
+            for num in unique_nums:
+                try:
+                    cmd = ["sudo", "iptables", "-D", chain, str(num)]
+                    # Thêm timeout để tránh đơ
+                    result = subprocess.run(cmd, check=True, timeout=5, capture_output=True, text=True)
+                    deleted.append(num)
+                except subprocess.TimeoutExpired:
+                    print(f"Timeout khi xóa rule {num} từ chain {chain}")
+                    failed.append(num)
+                except subprocess.CalledProcessError as e:
+                    print(f"Lỗi xóa rule {num} từ chain {chain}: {e}")
+                    failed.append(num)
+                except Exception as e:
+                    print(f"Lỗi không xác định khi xóa rule {num} từ chain {chain}: {e}")
+                    failed.append(num)
         
         return jsonify({
             "status": "success",
@@ -386,6 +435,9 @@ def delete_many_rules():
             "failed": failed
         })
     except Exception as e:
+        import traceback
+        print(f"Lỗi trong delete_many_rules: {e}")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 

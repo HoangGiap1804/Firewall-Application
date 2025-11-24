@@ -84,6 +84,34 @@ EOF
         systemctl stop "$SERVICE_NAME"
         ;;
     
+    restart)
+        if [ "$EUID" -ne 0 ]; then 
+            echo "Vui lòng chạy với quyền sudo: sudo $0 restart"
+            exit 1
+        fi
+        echo "🔄 Đang restart service để load code mới..."
+        systemctl restart "$SERVICE_NAME"
+        sleep 1
+        systemctl status "$SERVICE_NAME"
+        echo ""
+        echo "✅ Service đã được restart. Code mới đã được load."
+        echo "📋 Xem logs: sudo $0 logs"
+        ;;
+    
+    reload)
+        if [ "$EUID" -ne 0 ]; then 
+            echo "Vui lòng chạy với quyền sudo: sudo $0 reload"
+            exit 1
+        fi
+        echo "🔄 Đang reload service (graceful restart)..."
+        systemctl daemon-reload
+        systemctl restart "$SERVICE_NAME"
+        sleep 1
+        systemctl status "$SERVICE_NAME"
+        echo ""
+        echo "✅ Service đã được reload."
+        ;;
+    
     status)
         if [ "$EUID" -ne 0 ]; then 
             echo "Vui lòng chạy với quyền sudo: sudo $0 status"
@@ -101,15 +129,19 @@ EOF
         ;;
     
     *)
-        echo "Usage: $0 {install|uninstall|start|stop|status|logs}"
+        echo "Usage: $0 {install|uninstall|start|stop|restart|reload|status|logs}"
         echo ""
         echo "Commands:"
         echo "  install   - Cài đặt service vào systemd"
         echo "  uninstall - Gỡ cài đặt service"
         echo "  start     - Khởi động service"
         echo "  stop      - Dừng service"
+        echo "  restart   - Restart service (load code mới) ⭐"
+        echo "  reload    - Reload service và systemd config"
         echo "  status    - Xem trạng thái service"
         echo "  logs      - Xem logs của service (theo dõi real-time)"
+        echo ""
+        echo "💡 Sau khi sửa code backend, chạy: sudo $0 restart"
         exit 1
         ;;
 esac

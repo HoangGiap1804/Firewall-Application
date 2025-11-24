@@ -1,0 +1,94 @@
+@startuml MonitoringSequence
+!theme plain
+autonumber
+
+participant "Monitoring Thread" as Thread
+participant "update_monitoring()" as Update
+participant "cgroup files" as Cgroup
+participant "psutil" as Psutil
+participant "systemctl" as Systemctl
+participant "Anomaly Detection" as Detection
+participant "Notification System" as Notify
+participant "Email Service" as Email
+participant "GUI" as GUI
+participant "API Client" as Client
+participant "Flask Service" as Service
+
+loop Mỗi 2 giây
+    Thread -> Update: update_monitoring()
+    
+    == Thu thập dữ liệu CPU ==
+    Update -> Cgroup: Read /sys/fs/cgroup/.../cpu.stat
+    Cgroup --> Update: usage_usec
+    Update -> Update: Calculate CPU %
+    
+    == Thu thập dữ liệu RAM ==
+    Update -> Cgroup: Read /sys/fs/cgroup/.../memory.current
+    Cgroup --> Update: used_bytes
+    Update -> Update: Calculate RAM % và MB
+    
+    == Thu thập dữ liệu Disk I/O ==
+    Update -> Cgroup: Read /sys/fs/cgroup/.../io.stat
+    Cgroup --> Update: rbytes, wbytes
+    
+    == Thu thập dữ liệu Network ==
+    Update -> Psutil: net_io_counters()
+    Psutil --> Update: bytes_recv, bytes_sent
+    Update -> Update: Calculate RX/TX rate
+    
+    == Thu thập Temperature ==
+    Update -> Cgroup: Read /sys/class/thermal/thermal_zone*/temp
+    Cgroup --> Update: temperature
+    
+    == Thu thập Services ==
+    Update -> Systemctl: machinectl shell ... systemctl list-units
+    Systemctl --> Update: Running services count
+    
+    Update -> Update: Store in monitoring_data
+    
+    == Phát hiện Anomaly ==
+    Update -> Detection: Check thresholds
+    
+    alt CPU > 85%
+        Detection -> Update: Create alert\n{type: "CPU", severity: "high"}
+        Update -> Notify: send_malware_alert("Trojan.Generic", "high")
+        Notify -> Notify: Desktop notification\n(notify-send)
+        Notify -> Email: Send email alert (if configured)
+        Notify --> User: Desktop popup
+    end
+    
+    alt RAM spike > 150MB
+        Detection -> Update: Create alert\n{type: "RAM", severity: "high"}
+        Update -> Notify: send_malware_alert("Trojan.Generic", "high")
+        Notify -> Notify: Desktop notification
+        Notify -> Email: Send email alert
+        Notify --> User: Desktop popup
+    end
+    
+    alt Services > 10
+        Detection -> Update: Check cooldown (60s)
+        alt Cooldown expired
+            Detection -> Update: Create alert\n{type: "Service", severity: "high"}
+            Update -> Notify: send_malware_alert("Service", "high")
+            Notify -> Notify: Desktop notification
+            Notify -> Email: Send email alert
+            Notify --> User: Desktop popup
+        end
+    end
+    
+    Update -> Update: Keep max 100 alerts
+end
+
+== GUI Request Monitoring Data ==
+loop Mỗi 2 giây (GUI timer)
+    GUI -> Client: get_monitoring_data()
+    Client -> Service: GET /api/monitoring/data
+    Service --> Client: monitoring_data\n{CPU, RAM, Network, ...}
+    Client --> GUI: Monitoring data
+    
+    GUI -> GUI: Update charts\n(CPU, RAM, Network, Temperature)
+    GUI -> GUI: Update labels\n(CPU %, RAM %, etc.)
+end
+
+@enduml
+
