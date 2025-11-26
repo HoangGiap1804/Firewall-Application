@@ -87,7 +87,16 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def _init_log_tab(self):
         """Khởi tạo Log Tab"""
-        self.log_tab = LogTab(self.ui.tabLogTable)
+        # Truyền các widget cần thiết
+        date_edit = getattr(self.ui, 'logDateEdit', None)
+        load_button = getattr(self.ui, 'loadLogButton', None)
+        realtime_button = getattr(self.ui, 'realtimeLogButton', None)
+        self.log_tab = LogTab(
+            self.ui.tabLogTable,
+            date_edit=date_edit,
+            load_button=load_button,
+            realtime_button=realtime_button
+        )
     
     def _init_system_monitor(self):
         """Khởi tạo System Monitor và Charts sử dụng API"""

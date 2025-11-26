@@ -2,11 +2,10 @@
     "ACCEPT 6 -- * * 1.0.0.0 0.0.0.0/0 tcp dpt:1234": "illi",
     "ACCEPT 6 -- * * 4.0.0.4 0.0.0.0/0 tcp dpt:24": "12345",
     "ACCEPT 6 -- eth0 * 1.0.1.0 0.0.0.0/0 tcp dpt:80 state NEW": "None",
-    "ACCEPT * -- * * * 0.0.0.0/0": "Invalid Packet",
-    "PORT_SCAN 6 -- * * * 0.0.0.0/0": "PORT_SCAN",
-    "DROP 17 -- * * * 0.0.0.0/0": "PORT_SCAN",
-    "ACCEPT 6 -- * * * 0.0.0.0/0": "SYN Flood",
-    "LOG 6 -- * * * 0.0.0.0/0": "SYN Flood",
-    "DROP 6 -- * * * 0.0.0.0/0": "SYN Flood",
-    "SYN_FLOOD 6 -- * * * 0.0.0.0/0": "SYN Flood"
+    "ACCEPT 6 -- * * 1.0.0.0 0.0.0.0/0 tcp dpt:80": "None",
+    "ACCEPT * -- * * * 0.0.0.0/0": "ICMP Flood",
+    "ACCEPT 1 -- * * * 0.0.0.0/0": "ICMP Flood",
+    "LOG 1 -- * * * 0.0.0.0/0": "ICMP Flood",
+    "DROP 1 -- * * * 0.0.0.0/0": "ICMP Flood",
+    "ICMP_FLOOD 1 -- * * * 0.0.0.0/0": "ICMP Flood"
 }

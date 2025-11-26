@@ -2,6 +2,11 @@
 """
 Firewall Service Daemon
 Service chạy backend logic và cung cấp REST API để giao diện điều khiển
+
+LƯU Ý: 
+- Service phải chạy với quyền root (User=root trong systemd service file)
+- Tất cả lệnh iptables trong service đều sử dụng "sudo" để đảm bảo quyền thực thi
+- Khi chạy với root, sudo sẽ tự động nhận ra và không yêu cầu password
 """
 
 import os

@@ -42,6 +42,149 @@
       </widget>
      </item>
      <item>
+      <layout class="QHBoxLayout" name="dateSelectionLayout">
+       <item>
+        <widget class="QLabel" name="dateLabel">
+         <property name="text">
+          <string>Chọn ngày:</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+    font-weight: 600;
+    font-size: 14px;
+    color: #2c3e50;
+    padding: 5px;
+}
+</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDateEdit" name="logDateEdit">
+         <property name="calendarPopup">
+          <bool>true</bool>
+         </property>
+         <property name="dateTime">
+          <datetime>
+           <hour>0</hour>
+           <minute>0</minute>
+           <second>0</second>
+           <year>2024</year>
+           <month>1</month>
+           <day>1</day>
+          </datetime>
+         </property>
+         <property name="displayFormat">
+          <string>yyyy-MM-dd</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QDateEdit {
+    padding: 8px;
+    border: 2px solid #3498db;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: white;
+    min-width: 150px;
+}
+
+QDateEdit:hover {
+    border-color: #2980b9;
+}
+
+QDateEdit::drop-down {
+    border: none;
+    width: 30px;
+}
+
+QDateEdit::down-arrow {
+    image: none;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #3498db;
+    margin-right: 5px;
+}
+</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="loadLogButton">
+         <property name="text">
+          <string>Xem Log</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #3498db, stop:1 #2980b9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    min-width: 100px;
+}
+
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2980b9, stop:1 #21618c);
+}
+
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #21618c, stop:1 #1a5276);
+}
+</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="realtimeLogButton">
+         <property name="text">
+          <string>Log Real-time</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #27ae60, stop:1 #229954);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #229954, stop:1 #1e8449);
+}
+
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #1e8449, stop:1 #196f3d);
+}
+</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
       <widget class="QTableWidget" name="tabLogTable">
        <property name="styleSheet">
         <string notr="true">QTableWidget {
@@ -163,6 +306,11 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
        <property name="gridStyle">
         <enum>Qt::SolidLine</enum>
        </property>
+       <column>
+        <property name="text">
+         <string>time</string>
+        </property>
+       </column>
        <column>
         <property name="text">
          <string>in</string>

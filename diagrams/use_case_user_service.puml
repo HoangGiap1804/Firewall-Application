@@ -1,0 +1,29 @@
+@startuml UseCaseUserService
+!theme plain
+left to right direction
+skinparam actorStyle awesome
+skinparam rectangle {
+    BackgroundColor LightCoral
+    BorderColor DarkRed
+}
+skinparam usecase {
+    BackgroundColor LightYellow
+    BorderColor DarkOrange
+}
+
+title Use Case Diagram - Quản lý Service\n(Actor: User)
+
+actor "User\n(Người dùng)" as user
+
+rectangle "Firewall Management System" {
+    usecase "UC-11: Khởi động Monitoring" as UC11
+    usecase "UC-12: Dừng Monitoring" as UC12
+    usecase "UC-13: Kiểm tra trạng thái Service" as UC13
+}
+
+user --> UC11 : Bắt đầu giám sát
+user --> UC12 : Dừng giám sát
+user --> UC13 : Kiểm tra service
+
+@enduml
+

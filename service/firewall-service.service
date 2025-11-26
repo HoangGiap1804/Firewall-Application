@@ -4,6 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
+# Service phải chạy với quyền root để có thể thực thi iptables commands
+# Tất cả lệnh iptables trong service đều sử dụng sudo để đảm bảo quyền
 User=root
 WorkingDirectory=/home/nqim/PBL6
 Environment="PATH=/home/nqim/PBL6/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
