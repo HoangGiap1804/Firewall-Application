@@ -5,7 +5,7 @@ Handler xử lý logic cho Available Rules Tab
 import subprocess
 import json
 import os
-from PyQt6.QtCore import QThread, QTimer, pyqtSignal, Qt
+from PyQt6.QtCore import QThread, QTimer, pyqtSignal, Qt, QObject
 from PyQt6.QtWidgets import QListWidgetItem, QMessageBox, QWidget, QHBoxLayout, QLabel, QPushButton
 from backend.rules.core import AvailableRules
 
@@ -33,14 +33,17 @@ class ToggleRuleWorker(QThread):
             self.finished.emit(self.group_name, self.enable, error_msg)
 
 
-class AvailableRulesHandler:
+class AvailableRulesHandler(QObject):
     """Xử lý logic cho tab Available Rules"""
+    
+    rules_changed = pyqtSignal()  # Signal emitted when rules change
     
     def __init__(self, ui):
         """
         Args:
             ui: UI object từ uic.loadUi
         """
+        super().__init__()
         self.ui = ui
         self.available_rules = AvailableRules()
         self.available_rule_map = self._build_rule_map()
@@ -152,6 +155,9 @@ class AvailableRulesHandler:
             checkbox.blockSignals(True)
             checkbox.setChecked(not enable)
             checkbox.blockSignals(False)
+        else:
+            # Emit signal to refresh rules table
+            self.rules_changed.emit()
         
         # Xử lý pending toggle nếu có
         if self.pending_toggle:
@@ -165,6 +171,7 @@ class AvailableRulesHandler:
             self.worker.quit()
             self.worker.wait()
             self.worker = None
+
     
     def _process_pending_toggle(self, group_name, enable, checkbox):
         """Xử lý toggle đang chờ"""
@@ -233,89 +240,6 @@ class AvailableRulesHandler:
         except Exception as e:
             print(f"Error initializing outbound UI: {e}")
     
-    def _on_add_outbound_rule(self):
-        """Xử lý khi click button thêm outbound rule"""
-        try:
-            protocol = self.ui.comboBoxProtocol.currentText().lower()
-            port = self.ui.lineEditPort.text().strip()
-            
-            # ICMP không cần port
-            if protocol == "icmp":
-                rule_info = f"{protocol.upper()}"
-                existing_rule = next((r for r in self.outbound_rules if r.get("rule_info") == rule_info), None)
-                if existing_rule:
-                    QMessageBox.information(None, "Thông báo", "Rule này đã tồn tại!")
-                    return
-                
-                # Thêm rule ICMP
-                cmd = ["sudo", "iptables", "-A", "OUTPUT", "-p", protocol, "-j", "ACCEPT"]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-                
-                if result.returncode == 0:
-                    rule_data = {
-                        "protocol": protocol,
-                        "port": None,
-                        "rule_info": rule_info
-                    }
-                    self.outbound_rules.append(rule_data)
-                    self._save_outbound_rules()  # Lưu vào file
-                    self._refresh_outbound_rules_list()
-                    print(f"✅ Đã thêm rule: {protocol.upper()}")
-                    self.ui.lineEditPort.clear()
-                    return
-                else:
-                    error_msg = result.stderr if result.stderr else "Không thể thêm rule"
-                    QMessageBox.warning(None, "Lỗi", f"Không thể thêm rule: {error_msg}")
-                    return
-            
-            # TCP và UDP cần port
-            if not port:
-                QMessageBox.warning(None, "Lỗi", "Vui lòng nhập port!")
-                return
-            
-            # Validate port
-            try:
-                port_num = int(port)
-                if port_num < 1 or port_num > 65535:
-                    raise ValueError("Port phải từ 1 đến 65535")
-            except ValueError as e:
-                QMessageBox.warning(None, "Lỗi", f"Port không hợp lệ: {e}")
-                return
-            
-            # Kiểm tra rule đã tồn tại chưa
-            rule_info = f"{protocol.upper()}:{port_num}"
-            existing_rule = next((r for r in self.outbound_rules if r.get("rule_info") == rule_info), None)
-            if existing_rule:
-                QMessageBox.information(None, "Thông báo", "Rule này đã tồn tại!")
-                return
-            
-            # Thêm rule
-            cmd = ["sudo", "iptables", "-A", "OUTPUT", "-p", protocol, "--dport", str(port_num), "-j", "ACCEPT"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            
-            if result.returncode == 0:
-                # Lưu rule vào danh sách
-                rule_data = {
-                    "protocol": protocol,
-                    "port": str(port_num),
-                    "rule_info": rule_info
-                }
-                self.outbound_rules.append(rule_data)
-                self._save_outbound_rules()  # Lưu vào file
-                self._refresh_outbound_rules_list()
-                print(f"✅ Đã thêm rule: {protocol.upper()} port {port_num}")
-                # Clear input
-                self.ui.lineEditPort.clear()
-            else:
-                error_msg = result.stderr if result.stderr else "Không thể thêm rule"
-                QMessageBox.warning(None, "Lỗi", f"Không thể thêm rule: {error_msg}")
-        except subprocess.TimeoutExpired:
-            QMessageBox.warning(None, "Lỗi", "Timeout khi thêm rule!")
-        except Exception as e:
-            QMessageBox.warning(None, "Lỗi", f"Lỗi: {str(e)}")
-            import traceback
-            traceback.print_exc()
-    
     def _refresh_outbound_rules_list(self):
         """Cập nhật danh sách outbound rules trong listWidget với button xóa"""
         try:
@@ -372,35 +296,7 @@ class AvailableRulesHandler:
             print(f"Error refreshing outbound rules list: {e}")
             import traceback
             traceback.print_exc()
-    
-    def _delete_outbound_rule(self, rule_data):
-        """Xóa outbound rule"""
-        try:
-            protocol = rule_data.get("protocol")
-            port = rule_data.get("port")
-            rule_info = rule_data.get("rule_info")
-            
-            # Xóa rule khỏi iptables
-            if protocol == "icmp":
-                cmd = ["sudo", "iptables", "-D", "OUTPUT", "-p", protocol, "-j", "ACCEPT"]
-            else:
-                cmd = ["sudo", "iptables", "-D", "OUTPUT", "-p", protocol, "--dport", port, "-j", "ACCEPT"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            
-            if result.returncode == 0:
-                # Xóa khỏi danh sách
-                self.outbound_rules = [r for r in self.outbound_rules if r.get("rule_info") != rule_info]
-                self._save_outbound_rules()  # Lưu vào file
-                self._refresh_outbound_rules_list()
-                print(f"✅ Đã xóa rule: {rule_info}")
-            else:
-                error_msg = result.stderr if result.stderr else "Không thể xóa rule"
-                QMessageBox.warning(None, "Lỗi", f"Không thể xóa rule: {error_msg}")
-        except Exception as e:
-            QMessageBox.warning(None, "Lỗi", f"Lỗi khi xóa rule: {str(e)}")
-            import traceback
-            traceback.print_exc()
-    
+
     def _apply_outbound_rule(self, rule_data):
         """Áp dụng một outbound rule vào iptables"""
         try:
@@ -425,7 +321,121 @@ class AvailableRulesHandler:
         except Exception as e:
             print(f"⚠️ Lỗi khi áp dụng rule {rule_data.get('rule_info')}: {e}")
             return False
-    
+
+    def _on_add_outbound_rule(self):
+        """Xử lý khi click button thêm outbound rule"""
+        try:
+            protocol = self.ui.comboBoxProtocol.currentText().lower()
+            port = self.ui.lineEditPort.text().strip()
+            
+            # ICMP không cần port
+            if protocol == "icmp":
+                rule_info = f"{protocol.upper()}"
+                existing_rule = next((r for r in self.outbound_rules if r.get("rule_info") == rule_info), None)
+                if existing_rule:
+                    QMessageBox.information(None, "Thông báo", "Rule này đã tồn tại!")
+                    return
+                
+                # Thêm rule ICMP
+                cmd = ["sudo", "iptables", "-A", "OUTPUT", "-p", protocol, "-j", "ACCEPT"]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+                
+                if result.returncode == 0:
+                    rule_data = {
+                        "protocol": protocol,
+                        "port": None,
+                        "rule_info": rule_info
+                    }
+                    self.outbound_rules.append(rule_data)
+                    self._save_outbound_rules()  # Lưu vào file
+                    self._refresh_outbound_rules_list()
+                    print(f"✅ Đã thêm rule: {protocol.upper()}")
+                    self.ui.lineEditPort.clear()
+                    self.rules_changed.emit()
+                    return
+                else:
+                    error_msg = result.stderr if result.stderr else "Không thể thêm rule"
+                    QMessageBox.warning(None, "Lỗi", f"Không thể thêm rule: {error_msg}")
+                    return
+            
+            # TCP và UDP cần port
+            if not port:
+                QMessageBox.warning(None, "Lỗi", "Vui lòng nhập port!")
+                return
+            
+            # Validate port
+            try:
+                port_num = int(port)
+                if port_num < 1 or port_num > 65535:
+                    raise ValueError("Port phải từ 1 đến 65535")
+            except ValueError as e:
+                QMessageBox.warning(None, "Lỗi", f"Port không hợp lệ: {e}")
+                return
+            
+            # Kiểm tra rule đã tồn tại chưa
+            rule_info = f"{protocol.upper()}:{port_num}"
+            existing_rule = next((r for r in self.outbound_rules if r.get("rule_info") == rule_info), None)
+            if existing_rule:
+                QMessageBox.information(None, "Thông báo", "Rule này đã tồn tại!")
+                return
+            
+            # Thêm rule
+            cmd = ["sudo", "iptables", "-A", "OUTPUT", "-p", protocol, "--dport", str(port_num), "-j", "ACCEPT"]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                # Lưu rule vào danh sách
+                rule_data = {
+                    "protocol": protocol,
+                    "port": str(port_num),
+                    "rule_info": rule_info
+                }
+                self.outbound_rules.append(rule_data)
+                self._save_outbound_rules()  # Lưu vào file
+                self._refresh_outbound_rules_list()
+                print(f"✅ Đã thêm rule: {protocol.upper()} port {port_num}")
+                # Clear input
+                self.ui.lineEditPort.clear()
+                self.rules_changed.emit()
+            else:
+                error_msg = result.stderr if result.stderr else "Không thể thêm rule"
+                QMessageBox.warning(None, "Lỗi", f"Không thể thêm rule: {error_msg}")
+        except subprocess.TimeoutExpired:
+            QMessageBox.warning(None, "Lỗi", "Timeout khi thêm rule!")
+        except Exception as e:
+            QMessageBox.warning(None, "Lỗi", f"Lỗi: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def _delete_outbound_rule(self, rule_data):
+        """Xóa outbound rule"""
+        try:
+            protocol = rule_data.get("protocol")
+            port = rule_data.get("port")
+            rule_info = rule_data.get("rule_info")
+            
+            # Xóa rule khỏi iptables
+            if protocol == "icmp":
+                cmd = ["sudo", "iptables", "-D", "OUTPUT", "-p", protocol, "-j", "ACCEPT"]
+            else:
+                cmd = ["sudo", "iptables", "-D", "OUTPUT", "-p", protocol, "--dport", port, "-j", "ACCEPT"]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                # Xóa khỏi danh sách
+                self.outbound_rules = [r for r in self.outbound_rules if r.get("rule_info") != rule_info]
+                self._save_outbound_rules()  # Lưu vào file
+                self._refresh_outbound_rules_list()
+                print(f"✅ Đã xóa rule: {rule_info}")
+                self.rules_changed.emit()
+            else:
+                error_msg = result.stderr if result.stderr else "Không thể xóa rule"
+                QMessageBox.warning(None, "Lỗi", f"Không thể xóa rule: {error_msg}")
+        except Exception as e:
+            QMessageBox.warning(None, "Lỗi", f"Lỗi khi xóa rule: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
     def _handle_outbound_toggle(self, enable):
         """Xử lý khi toggle Outbound Protection"""
         try:
@@ -476,6 +486,8 @@ class AvailableRulesHandler:
                     print("✅ Đã set OUTPUT chain policy thành ACCEPT")
                     # Lưu ý: Không xóa các rules khỏi danh sách, chỉ thay đổi policy
                     # Các rules vẫn được giữ lại trong file để có thể áp dụng lại khi bật lại
+            
+            self.rules_changed.emit()
         except Exception as e:
             print(f"Error handling outbound toggle: {e}")
             import traceback

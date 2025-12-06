@@ -141,6 +141,11 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # Restore checkbox states (delay để UI load xong)
         QTimer.singleShot(0, self.available_rules_handler.load_available_rules_status)
+        
+        # Connect rules_changed signal to refresh Rules table
+        self.available_rules_handler.rules_changed.connect(
+            self.rules_table_handler.refresh_rules_table
+        )
 
     def _init_sandbox(self):
         """Khởi tạo Sandbox Handler"""
