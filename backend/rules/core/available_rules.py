@@ -278,23 +278,24 @@ class AvailableRules(QObject):
             "chain": "PORT_SCAN",
             "target_chain": "INPUT",
             "rules": [
-                # Tạo chain mới (xóa nếu đã tồn tại)
-                ["sudo", "iptables", "-F", "PORT_SCAN"],
-                ["sudo", "iptables", "-X", "PORT_SCAN"],
+                # Xóa và tạo chain PORT_SCAN
+                ["sudo", "iptables", "-F", "PORT_SCAN", "||", "true"],
+                ["sudo", "iptables", "-X", "PORT_SCAN", "||", "true"],
                 ["sudo", "iptables", "-N", "PORT_SCAN"],
-                # Log giới hạn 2 lần/phút để tránh log flood
-                ["sudo", "iptables", "-A", "PORT_SCAN", "-m", "limit", "--limit", "2/min",
-                "-j", "LOG", "--log-prefix", "PORT_SCAN: ", "--log-level", "4"],
-                # Drop toàn bộ gói bị nghi ngờ
-                ["sudo", "iptables", "-A", "PORT_SCAN", "-j", "DROP"],
-                # Gắn các rule phát hiện đặc trưng của Port Scan vào INPUT
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "NONE", "-j", "PORT_SCAN"],          # NULL scan
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "ALL", "-j", "PORT_SCAN"],          # XMAS scan
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "ALL", "FIN,URG,PSH", "-j", "PORT_SCAN"],  # Xmas variation
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,RST", "SYN,RST", "-j", "PORT_SCAN"],  # SYN/RST scan
-                ["sudo", "iptables", "-A", "INPUT", "-p", "tcp", "--tcp-flags", "SYN,FIN", "SYN,FIN", "-j", "PORT_SCAN"],  # SYN/FIN scan
-                # Chặn gói UDP nghi ngờ (kích thước nhỏ bất thường)
-                ["sudo", "iptables", "-A", "INPUT", "-p", "udp", "-m", "length", "--length", "0:28", "-j", "DROP"],
+
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "tcp", "--syn", "-m", "limit", "--limit", "1/s", "--limit-burst", "4", "-j", "RETURN"],
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "tcp", "--syn", "-j", "LOG", "--log-prefix", "PORTSCAN-SYN: "],
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "tcp", "--syn", "-j", "DROP"],
+
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "tcp", "-m", "state", "--state", "NEW", "-m", "limit", "--limit", "10/s", "--limit-burst", "20", "-j", "RETURN"],
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "tcp", "-m", "state", "--state", "NEW", "-j", "LOG", "--log-prefix", "PORTSCAN-CONNECT: "],
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "tcp", "-m", "state", "--state", "NEW", "-j", "DROP"],
+
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "udp", "-m", "limit", "--limit", "5/s", "--limit-burst", "10", "-j", "RETURN"],
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "udp", "-j", "LOG", "--log-prefix", "PORTSCAN-UDP: "],
+                ["sudo", "iptables", "-A", "PORT_SCAN", "-p", "udp", "-j", "DROP"],
+
+                ["sudo", "iptables", "-A", "INPUT", "-j", "PORT_SCAN"]
             ]
         },
         "IP Spoofing": {
@@ -728,6 +729,21 @@ class AvailableRules(QObject):
                             logs.append(f"WARNING deleting chain {chain_name}: {e}")
                             import traceback
                             traceback.print_exc()
+                    
+                    # Bước 3: Xóa chain PORT_SCAN_DETECT nếu là rule "Port Scan"
+                    if group_name == "Port Scan":
+                        try:
+                            detect_chain = "PORT_SCAN_DETECT"
+                            try:
+                                if chain_exists(detect_chain):
+                                    res1 = run_cmd(["sudo", "iptables", "-F", detect_chain])
+                                    res2 = run_cmd(["sudo", "iptables", "-X", detect_chain])
+                                    if res1 and hasattr(res1, 'returncode') and res2 and hasattr(res2, 'returncode'):
+                                        logs.append(f"FLUSH/DELETE chain: {detect_chain} => {res1.returncode}, {res2.returncode}")
+                            except Exception as e:
+                                logs.append(f"  WARNING checking/deleting chain {detect_chain}: {str(e)}")
+                        except Exception as e:
+                            logs.append(f"WARNING deleting chain PORT_SCAN_DETECT: {e}")
 
                     try:
                         if not isinstance(self.status, dict):

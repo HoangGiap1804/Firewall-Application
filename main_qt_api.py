@@ -12,6 +12,7 @@ from backend.monitoring import setup_charts
 from backend.rules.handlers.rules_table_handler_api import RulesTableHandlerAPI
 from backend.rules.handlers.add_rule_handler_api import AddRuleHandlerAPI
 from backend.rules.handlers import AvailableRulesHandler
+from backend.sandbox.sandbox_handler import SandboxHandler
 from frontend.ui_loader import load_all_tabs
 from service.api_client import get_client
 
@@ -40,6 +41,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._init_rules_table()
         self._init_add_rule()
         self._init_available_rules()
+        self._init_sandbox()
         
         # Bắt đầu monitoring trên service
         try:
@@ -139,6 +141,11 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # Restore checkbox states (delay để UI load xong)
         QTimer.singleShot(0, self.available_rules_handler.load_available_rules_status)
+
+    def _init_sandbox(self):
+        """Khởi tạo Sandbox Handler"""
+        self.sandbox_handler = SandboxHandler(self.ui)
+
     
     def closeEvent(self, event):
         """Xử lý khi đóng ứng dụng"""
@@ -148,6 +155,38 @@ class MainWindow(QtWidgets.QMainWindow):
 
         
 if __name__ == "__main__":
+    # Check for root privileges
+    import os
+    if os.geteuid() != 0:
+        import subprocess
+        print("Not running as root. Restarting with pkexec...")
+        
+        # Prepare the command
+        # We need to preserve DISPLAY and XAUTHORITY for GUI to work
+        env = os.environ.copy()
+        
+        # Basic command to restart self
+        script_path = os.path.abspath(__file__)
+        args = ["pkexec", "env"]
+        
+        # Pass essential X11 variables
+        if "DISPLAY" in env:
+            args.append(f"DISPLAY={env['DISPLAY']}")
+        if "XAUTHORITY" in env:
+            args.append(f"XAUTHORITY={env['XAUTHORITY']}")
+            
+        args.extend([sys.executable, script_path] + sys.argv[1:])
+        
+        try:
+            # Replace the current process
+            os.execvpe("pkexec", args, env)
+        except OSError as e:
+            print(f"Error restarting as root: {e}")
+            sys.exit(1)
+
+    # Ensure working directory is the project root (pkexec might change it)
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.ui.show()

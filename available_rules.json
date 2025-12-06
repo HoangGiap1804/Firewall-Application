@@ -4,11 +4,11 @@
         "group": "ICMP Flood"
     },
     "SYN Flood": {
-        "enabled": false,
+        "enabled": true,
         "group": "SYN Flood"
     },
     "Port Scan": {
-        "enabled": false,
+        "enabled": true,
         "group": "PORT_SCAN"
     },
     "IP Spoofing": {
@@ -28,7 +28,7 @@
         "group": "Outbound Protection"
     },
     "FIN/XMAS/NULL Scan": {
-        "enabled": false,
+        "enabled": true,
         "group": "FIN/XMAS/NULL Scan"
     },
     "SSH/FTP Brute Force": {

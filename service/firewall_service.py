@@ -24,8 +24,7 @@ import re
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.rules.core.rule_input import get_input_rules, get_all_chains_rules, get_group_map, normalize_rule_key
-from backend.rules.core.add_rule import IptablesHandler, load_meta, save_meta, make_rule_key
-from backend.notifications import send_malware_alert
+from backend.notifications import send_malware_alert, send_performance_alert
 
 app = Flask(__name__)
 CORS(app)  # Cho phép CORS để GUI có thể gọi API
@@ -58,13 +57,11 @@ prev_cpu_usage = 0
 prev_time = time.time()
 prev_net_rx = 0
 prev_net_tx = 0
-prev_ram = 0
 
-RAM_SPIKE_MB = 150
-CPU_SPIKE_PERCENT = 40
 CPU_MAX_PERCENT = 85
 SERVICE_ALERT_COOLDOWN = 60
 last_service_alert_time = 0
+last_ram_alert_time = 0
 
 
 def find_veth():
@@ -81,8 +78,8 @@ def find_veth():
 
 def update_monitoring():
     """Cập nhật dữ liệu monitoring"""
-    global prev_cpu_usage, prev_time, prev_net_rx, prev_net_tx, prev_ram
-    global last_service_alert_time
+    global prev_cpu_usage, prev_time, prev_net_rx, prev_net_tx
+    global last_service_alert_time, last_ram_alert_time
     
     try:
         # CPU
@@ -107,7 +104,7 @@ def update_monitoring():
                     "severity": "high",
                     "timestamp": time.time()
                 })
-                send_malware_alert(malware_type="Trojan.Generic", severity="high")
+                send_performance_alert(resource_type="CPU", usage_value=f"{cpu_percent:.1f}%", severity="high")
         
         # RAM
         mem_file = os.path.join(CGROUP_BASE, "memory.current")
@@ -122,17 +119,20 @@ def update_monitoring():
             monitoring_data["ram_percent"] = percent
             monitoring_data["ram_mb"] = used_mb
             
-            if prev_ram > 0:
-                diff_mb = (used_bytes - prev_ram) / (1024 ** 2)
-                if diff_mb > RAM_SPIKE_MB:
+            # Check RAM > 90%
+            if percent > 90:
+                now = time.time()
+                if now - last_ram_alert_time >= SERVICE_ALERT_COOLDOWN:
                     monitoring_data["alerts"].append({
                         "type": "RAM",
-                        "message": f"RAM tăng đột biến: +{diff_mb:.1f} MB",
+                        "message": f"Cảnh báo RAM cao: {percent:.1f}% (>90%)",
                         "severity": "high",
-                        "timestamp": time.time()
+                        "timestamp": now
                     })
-                    send_malware_alert(malware_type="Trojan.Generic", severity="high")
-            prev_ram = used_bytes
+                    last_ram_alert_time = now
+                    send_performance_alert(resource_type="RAM", usage_value=f"{percent:.1f}% (>90%)", severity="high")
+            
+
         
         # Disk
         io_file = os.path.join(CGROUP_BASE, "io.stat")
@@ -318,12 +318,32 @@ def add_rule():
         action = data.get("action", "")
         interface = data.get("interface", "")
         state = data.get("state", "")
-        group = data.get("group", "")
+        
+        # Lấy chain từ request, default về INPUT nếu không có
+        chain = data.get("chain")
+        print(f"🔍 DEBUG Service: chain from data.get('chain'): '{chain}' (type: {type(chain)})")
+        
+        if chain is None:
+            chain = "INPUT"
+            print(f"🔍 DEBUG Service: chain is None, defaulting to INPUT")
+        elif isinstance(chain, str):
+            chain = chain.strip()
+            if not chain:
+                chain = "INPUT"
+                print(f"🔍 DEBUG Service: chain is empty after strip, defaulting to INPUT")
+            else:
+                print(f"🔍 DEBUG Service: Using chain value: '{chain}'")
+        else:
+            chain = str(chain).strip() if chain else "INPUT"
+            print(f"🔍 DEBUG Service: Converted chain to: '{chain}'")
         
         if not protocol or not action:
             return jsonify({"error": "Protocol và Action là bắt buộc"}), 400
         
-        cmd = ["sudo", "iptables", "-A", "INPUT", "-p", protocol]
+        # Tạo iptables command
+        print(f"🔍 DEBUG Service: Final chain value before command: '{chain}'")
+        cmd = ["sudo", "iptables", "-A", chain, "-p", protocol]
+        print(f"🔍 DEBUG Service: Command: {' '.join(cmd)}")
         if ip:
             cmd += ["-s", ip]
         if port:
@@ -334,21 +354,22 @@ def add_rule():
             cmd += ["-m", "state", "--state", state]
         cmd += ["-j", action]
         
-        subprocess.run(cmd, check=True, timeout=10)
-        
-        # Lưu metadata
-        result = subprocess.run(
-            ["sudo", "iptables", "-L", "INPUT", "-v", "-n", "--line-numbers"],
-            capture_output=True, text=True, check=True, timeout=5
-        )
-        lines = [l for l in result.stdout.splitlines()[2:] if l.strip()]
-        if lines:
-            last_rule = lines[-1]
-            parts = last_rule.split()
-            key = make_rule_key(parts)
-            meta = load_meta()
-            meta[key] = group.strip() if group.strip() else "None"
-            save_meta(meta)
+        try:
+            subprocess.run(cmd, check=True, timeout=10)
+        except subprocess.CalledProcessError as e:
+            stderr = getattr(e, 'stderr', '') or str(e)
+            # Nếu chain không tồn tại, tự động tạo chain
+            if any(x in stderr for x in ["No chain", "No such chain", "does not exist"]):
+                try:
+                    subprocess.run(["sudo", "iptables", "-N", chain], check=True, timeout=5)
+                    subprocess.run(cmd, check=True, timeout=10)
+                except subprocess.CalledProcessError as create_error:
+                    create_stderr = getattr(create_error, 'stderr', '') or str(create_error)
+                    if "already exists" not in create_stderr.lower():
+                        return jsonify({"error": f"Không thể tạo chain '{chain}': {create_stderr}"}), 400
+                    subprocess.run(cmd, check=True, timeout=10)
+            else:
+                raise
         
         return jsonify({"status": "success", "message": f"Đã thêm rule: {' '.join(cmd)}"})
     except subprocess.CalledProcessError as e:

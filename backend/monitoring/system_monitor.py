@@ -3,7 +3,7 @@ import time
 import subprocess
 from PyQt6.QtCore import QObject, QTimer, pyqtSlot
 from PyQt6.QtWidgets import QLabel
-from backend.notifications import send_malware_alert
+from backend.notifications import send_malware_alert, send_performance_alert
 import re
 import psutil
 
@@ -29,7 +29,6 @@ class SystemMonitor(QObject):
         self.veth_iface = self.find_veth()
 
          # --- THÊM ---
-        self.prev_ram = 0
         self.prev_cpu_percent = 0
         
         # Giá trị hiện tại để chart có thể truy cập
@@ -39,9 +38,12 @@ class SystemMonitor(QObject):
         self.current_network_rx = 0  # bytes per second
         self.current_network_tx = 0  # bytes per second
 
-        self.RAM_SPIKE_MB = 150        # tăng >150MB coi như đột biến
-        self.CPU_SPIKE_PERCENT = 40    # tăng >40% trong 2 giây
+
         self.CPU_MAX_PERCENT = 85      # CPU vượt ngưỡng nguy hiểm
+        
+        self.last_ram_alert_time = 0
+        self.RAM_ALERT_COOLDOWN = 60
+
 
     # =======================
     # === Update toàn bộ ===
@@ -78,17 +80,25 @@ class SystemMonitor(QObject):
             
             # Lưu giá trị để chart có thể truy cập
             self.current_ram_percent = percent
-
-            if self.prev_ram > 0:
-                diff_mb = (used_bytes - self.prev_ram) / (1024 ** 2)
-                if diff_mb > self.RAM_SPIKE_MB:
-                    send_malware_alert(
-                        malware_type="Trojan.Generic",
+            
+            # Check RAM > 90%
+            if percent > 90:
+                now = time.time()
+                now = time.time()
+                if now - self.last_ram_alert_time >= self.RAM_ALERT_COOLDOWN:
+                    send_performance_alert(
+                        resource_type="RAM",
+                        usage_value=f"{percent:.1f}% (>90%)",
                         severity="high"
                     )
+                    self.last_ram_alert_time = now
+                    # Optional: Add local visual warning if needed, e.g. update label color
+                    self.show_alert(f"RAM Alert: {percent:.1f}%")
 
 
-            self.prev_ram = used_bytes
+
+
+
 
             label = self.ui.findChild(QLabel, "label_ram")
             if label:
@@ -183,11 +193,12 @@ class SystemMonitor(QObject):
         count = 0
 
         # ---- 1) Thử chạy ss trong container (nếu máy đã cấu hình sudo machinectl không hỏi mật khẩu) ----
+        # ---- 1) Thử chạy ss trong container (nếu máy đã cấu hình sudo machinectl không hỏi mật khẩu) ----
         try:
-            cmd = [
-                "sudo", "machinectl", "shell", f"root@{CONTAINER_NAME}",
-                "/bin/ss", "-tunp", "state", "established"
-            ]
+            cmd = ["machinectl", "shell", f"root@{CONTAINER_NAME}", "/bin/ss", "-tunp", "state", "established"]
+            if os.geteuid() != 0:
+                cmd.insert(0, "sudo")
+            
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
             out = proc.stdout or ""
             if out:
@@ -308,8 +319,12 @@ class SystemMonitor(QObject):
     def update_services(self):
         try:
             # Liệt kê dịch vụ đang chạy trong container
+            cmd = ["machinectl", "shell", f"root@{CONTAINER_NAME}", "/bin/systemctl", "list-units", "--type=service", "--state=running", "--no-pager"]
+            if os.geteuid() != 0:
+                cmd.insert(0, "sudo")
+
             result = subprocess.run(
-                ["sudo", "machinectl", "shell", f"root@{CONTAINER_NAME}", "/bin/systemctl", "list-units", "--type=service", "--state=running", "--no-pager"],
+                cmd,
                 capture_output=True, text=True
             )
             running = len([l for l in result.stdout.splitlines() if ".service" in l])

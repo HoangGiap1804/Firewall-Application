@@ -206,7 +206,7 @@ QPushButton:pressed {
         <property name="spacing">
          <number>8</number>
         </property>
-        <item row="0" column="0" colspan="6">
+        <item row="0" column="0" colspan="7">
          <widget class="QLabel" name="labelAddRuleTitle">
           <property name="styleSheet">
            <string notr="true">font-weight: 600; 
@@ -364,6 +364,41 @@ QLineEdit:hover { border-color: #95a5a6; }
           </property>
           <property name="placeholderText">
            <string>--</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="6">
+         <widget class="QLabel" name="labelAddRuleChain">
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
+          </property>
+          <property name="text">
+           <string>Chain:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="7">
+         <widget class="QLineEdit" name="editAddRuleChain">
+          <property name="styleSheet">
+           <string notr="true">QLineEdit {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    padding: 4px 8px;
+    background-color: white;
+    font-size: 12px;
+}
+QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
+QLineEdit:hover { border-color: #95a5a6; }
+</string>
+          </property>
+          <property name="placeholderText">
+           <string>INPUT</string>
           </property>
          </widget>
         </item>
@@ -577,7 +612,7 @@ QLineEdit:hover { border-color: #95a5a6; }
           </property>
          </widget>
         </item>
-        <item row="4" column="0" colspan="6">
+        <item row="4" column="0" colspan="8">
          <layout class="QHBoxLayout" name="horizontalLayoutAddRule">
           <property name="spacing">
            <number>8</number>

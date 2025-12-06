@@ -92,7 +92,11 @@ def block_ip(ip):
             print(f"⚠️ IP {ip} đã bị chặn trước đó.")
             return
 
-        subprocess.run(["sudo", "iptables", "-I", "INPUT", "1", "-s", ip, "-j", "DROP"], check=True)
+        cmd = ["iptables", "-I", "INPUT", "1", "-s", ip, "-j", "DROP"]
+        if os.geteuid() != 0:
+            cmd.insert(0, "sudo")
+        
+        subprocess.run(cmd, check=True)
         print(f"🚫 Đã chặn IP: {ip}")
     except Exception as e:
         print(f"❌ Lỗi khi chặn IP {ip}: {e}")

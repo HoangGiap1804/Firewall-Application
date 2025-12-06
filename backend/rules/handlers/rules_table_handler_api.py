@@ -3,8 +3,35 @@ Handler xử lý logic cho Rules Table sử dụng API Service
 """
 
 from PyQt6.QtWidgets import QTableWidgetItem, QMessageBox
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 from service.api_client import get_client
+
+
+class RulesRefreshWorker(QThread):
+    """Worker thread để lấy rules từ API không block UI"""
+    rules_loaded = pyqtSignal(list)  # Emit rules list
+    
+    def __init__(self, client):
+        super().__init__()
+        self.client = client
+    
+    def run(self):
+        """Lấy rules từ API trong thread riêng"""
+        try:
+            rules = self.client.list_rules()
+            self.rules_loaded.emit(rules)
+        except ConnectionError as e:
+            print(f"❌ Lỗi kết nối khi lấy danh sách rules: {e}")
+            print("💡 Gợi ý: Kiểm tra xem Firewall Service có đang chạy không, hoặc kiểm tra OUTPUT chain policy")
+            self.rules_loaded.emit([])
+        except TimeoutError as e:
+            print(f"⏱️ Timeout khi lấy danh sách rules: {e}")
+            self.rules_loaded.emit([])
+        except Exception as e:
+            print(f"❌ Lỗi khi lấy danh sách rules: {e}")
+            import traceback
+            traceback.print_exc()
+            self.rules_loaded.emit([])
 
 
 class RulesTableHandlerAPI:
@@ -19,25 +46,60 @@ class RulesTableHandlerAPI:
         self.ui = ui
         self.client = get_client()
         self.current_filter = ""
+        self.is_refreshing = False  # Flag để tránh refresh đồng thời
+        self.last_rules_hash = None  # Hash để so sánh xem có thay đổi không
+        
         # Timer cần parent để không bị garbage collected
         # Nếu không có parent, dùng ui làm parent
         timer_parent = parent if parent else ui
         self.refresh_timer = QTimer(timer_parent)
         self.refresh_timer.timeout.connect(self.refresh_rules_table)
-        self.refresh_timer.start(1500)  # Refresh mỗi 1.5 giây
+        self.refresh_timer.start(3000)  # Refresh mỗi 3 giây (tăng từ 1.5s)
+        
+        self.worker = None  # Worker thread
     
     def refresh_rules_table(self):
-        """Lấy danh sách rule từ API và hiển thị trên tableRules"""
+        """Lấy danh sách rule từ API và hiển thị trên tableRules (async)"""
+        # Nếu đang refresh, bỏ qua
+        if self.is_refreshing:
+            return
+        
+        # Nếu worker đang chạy, bỏ qua
+        if self.worker and self.worker.isRunning():
+            return
+        
+        self.is_refreshing = True
+        
+        # Tạo và chạy worker thread
+        self.worker = RulesRefreshWorker(self.client)
+        self.worker.rules_loaded.connect(self._on_rules_loaded)
+        self.worker.finished.connect(lambda: setattr(self, 'is_refreshing', False))
+        self.worker.start()
+    
+    def _on_rules_loaded(self, rules):
+        """Xử lý khi rules đã được load xong"""
         try:
-            rules = self.client.list_rules()
+            # Tính hash để kiểm tra xem có thay đổi không
+            import hashlib
+            rules_str = str(sorted((r.get("chain", ""), r.get("num", "")) for r in rules))
+            rules_hash = hashlib.md5(rules_str.encode()).hexdigest()
+            
+            # Nếu không có thay đổi, bỏ qua update
+            if rules_hash == self.last_rules_hash:
+                self.is_refreshing = False
+                return
+            
+            self.last_rules_hash = rules_hash
+            
             # Debug: in số lượng rules và chains
             if rules:
                 chains = set(r.get("chain", "INPUT") for r in rules)
                 print(f"Đã lấy {len(rules)} rule(s) từ {len(chains)} chain(s): {', '.join(sorted(chains))}")
         except Exception as e:
-            print(f"Lỗi khi lấy danh sách rules: {e}")
+            print(f"Lỗi khi xử lý rules: {e}")
             import traceback
             traceback.print_exc()
+            self.is_refreshing = False
             return
         
         filter_text = self.current_filter.lower().strip()

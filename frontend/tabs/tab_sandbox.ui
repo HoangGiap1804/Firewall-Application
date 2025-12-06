@@ -59,6 +59,88 @@ border-bottom: 2px solid #27ae60;
        </widget>
       </item>
       <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_file_select">
+        <property name="spacing">
+         <number>15</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="label_image_path">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font-weight: 600; 
+font-size: 14px; 
+color: #34495e;
+</string>
+          </property>
+          <property name="text">
+           <string>Image:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_imagePath">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="placeholderText">
+           <string>Select rootfs or image...</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">padding: 6px; border: 1px solid #ccc; border-radius: 4px;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_selectFile">
+          <property name="text">
+           <string>Browse</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #3498db; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+          </property>
+         </widget>
+        </item>
+         <item>
+          <widget class="QPushButton" name="btn_importImage">
+           <property name="text">
+            <string>Send File</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #27ae60; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_run_sandbox">
+           <property name="text">
+            <string>Run Test</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #e67e22; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_stop_sandbox">
+           <property name="text">
+            <string>Stop Test</string>
+           </property>
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #c0392b; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+           </property>
+          </widget>
+         </item>
+       </layout>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="horizontalLayout_15">
         <property name="spacing">
          <number>15</number>
