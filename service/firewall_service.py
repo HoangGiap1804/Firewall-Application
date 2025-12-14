@@ -339,7 +339,22 @@ def add_rule():
         
         if not protocol or not action:
             return jsonify({"error": "Protocol và Action là bắt buộc"}), 400
-        
+            
+        # Luôn thử tạo chain trước (như yêu cầu của user: iptables -N & iptables -A)
+        # Bỏ qua built-in chains của filter table
+        if chain not in ["INPUT", "OUTPUT", "FORWARD"]:
+            try:
+                # Thử tạo chain, nếu tồn tại thì bỏ qua lỗi
+                subprocess.run(["sudo", "iptables", "-N", chain], 
+                               check=True, capture_output=True, text=True)
+                print(f"✅ Created chain '{chain}'")
+            except subprocess.CalledProcessError as e:
+                # Chỉ bỏ qua lỗi nếu chain đã tồn tại
+                err = getattr(e, 'stderr', '') or str(e)
+                if "already exists" not in err.lower():
+                    print(f"⚠️ Error creating chain '{chain}': {err}")
+                    # Không return error ở đây, cứ thử add rule xem sao (có thể là lỗi khác non-critical)
+
         # Tạo iptables command
         print(f"🔍 DEBUG Service: Final chain value before command: '{chain}'")
         cmd = ["sudo", "iptables", "-A", chain, "-p", protocol]
@@ -355,23 +370,12 @@ def add_rule():
         cmd += ["-j", action]
         
         try:
-            subprocess.run(cmd, check=True, timeout=10)
+             subprocess.run(cmd, check=True, timeout=10, capture_output=True, text=True)
+             return jsonify({"status": "success", "message": f"Đã thêm rule: {' '.join(cmd)}"})
         except subprocess.CalledProcessError as e:
             stderr = getattr(e, 'stderr', '') or str(e)
-            # Nếu chain không tồn tại, tự động tạo chain
-            if any(x in stderr for x in ["No chain", "No such chain", "does not exist"]):
-                try:
-                    subprocess.run(["sudo", "iptables", "-N", chain], check=True, timeout=5)
-                    subprocess.run(cmd, check=True, timeout=10)
-                except subprocess.CalledProcessError as create_error:
-                    create_stderr = getattr(create_error, 'stderr', '') or str(create_error)
-                    if "already exists" not in create_stderr.lower():
-                        return jsonify({"error": f"Không thể tạo chain '{chain}': {create_stderr}"}), 400
-                    subprocess.run(cmd, check=True, timeout=10)
-            else:
-                raise
-        
-        return jsonify({"status": "success", "message": f"Đã thêm rule: {' '.join(cmd)}"})
+            return jsonify({"error": f"Lỗi khi thêm rule: {stderr}"}), 500
+
     except subprocess.CalledProcessError as e:
         return jsonify({"error": f"Lỗi khi thêm rule: {e}"}), 500
     except Exception as e:
