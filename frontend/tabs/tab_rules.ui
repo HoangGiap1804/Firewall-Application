@@ -127,42 +127,6 @@ QPushButton:pressed {
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QPushButton" name="buttonDeleteMany">
-          <property name="minimumSize">
-           <size>
-            <width>140</width>
-            <height>40</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #e74c3c, stop:1 #c0392b);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-}
-QPushButton:hover {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #c0392b, stop:1 #a93226);
-    transform: translateY(-1px);
-}
-QPushButton:pressed {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #a93226, stop:1 #922b21);
-    transform: translateY(0px);
-}
-</string>
-          </property>
-          <property name="text">
-           <string>Delete Many</string>
-          </property>
-         </widget>
-        </item>
        </layout>
       </widget>
      </item>

@@ -388,12 +388,18 @@ def delete_rule():
     try:
         data = request.json
         num = data.get("num")
-        if not num or not num.isdigit():
-            return jsonify({"error": "Num phải là số"}), 400
+        chain = data.get("chain", "INPUT") # Default to INPUT if not provided
         
-        cmd = ["sudo", "iptables", "-D", "INPUT", num]
+        if not num or not str(num).isdigit():
+             return jsonify({"error": "Num phải là số"}), 400
+        
+        # Valid chain check (basic)
+        if not chain or not isinstance(chain, str):
+            chain = "INPUT"
+
+        cmd = ["sudo", "iptables", "-D", chain, str(num)]
         subprocess.run(cmd, check=True, timeout=5)
-        return jsonify({"status": "success", "message": f"Đã xóa rule số {num}"})
+        return jsonify({"status": "success", "message": f"Đã xóa rule số {num} khỏi chain {chain}"})
     except subprocess.CalledProcessError as e:
         return jsonify({"error": f"Lỗi khi xóa rule: {e}"}), 500
     except Exception as e:

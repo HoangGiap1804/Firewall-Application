@@ -90,24 +90,11 @@ class RulesTableHandlerAPI:
         filter_text = self.current_filter.lower().strip()
         table = self.ui.tableRules
         
-        # Save the state of checked checkboxes (lưu theo chain+num vì num có thể trùng nhau giữa các chains)
-        checked_rules = set()
-        delete_col = table.columnCount() - 1 if table.columnCount() > 0 else 12
-        chain_col = 10  # Cột chain
-        for row in range(table.rowCount()):
-            chk_item = table.item(row, delete_col)
-            if chk_item and chk_item.checkState() == Qt.CheckState.Checked:
-                num_item = table.item(row, 0)
-                chain_item = table.item(row, chain_col)
-                if num_item and chain_item:
-                    # Lưu theo format "chain:num" để tránh trùng lặp
-                    checked_rules.add(f"{chain_item.text()}:{num_item.text()}")
-        
         table.setRowCount(0)
         table.setColumnCount(13)
         headers = [
             "num", "pkts", "bytes", "target", "prot", "opt",
-            "in", "out", "source", "destination", "chain", "detail", "delete"
+            "in", "out", "source", "destination", "chain", "detail", "Action"
         ]
         table.setHorizontalHeaderLabels(headers)
 
@@ -135,7 +122,7 @@ class RulesTableHandlerAPI:
                     rule.get("opt", ""),
                     rule.get("source", ""),
                     rule.get("destination", ""),
-                    str(rule.get("pkts", "")),  # Optional: include stats if desired, but user list specific fields
+                    str(rule.get("pkts", "")),  
                     str(rule.get("bytes", "")),
                     detail
                 ]
@@ -158,17 +145,46 @@ class RulesTableHandlerAPI:
                 item.setFlags(item.flags() ^ Qt.ItemFlag.ItemIsEditable)
                 table.setItem(row_index, col_index, item)
 
-            # Add checkbox for deletion
-            chk_item = QTableWidgetItem()
-            chk_item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
-
-            # Restore checked state if previously checked (kiểm tra theo chain:num)
-            rule_key = f"{chain}:{rule['num']}"
-            if rule_key in checked_rules:
-                chk_item.setCheckState(Qt.CheckState.Checked)
-            else:
-                chk_item.setCheckState(Qt.CheckState.Unchecked)
-            table.setItem(row_index, 12, chk_item)
+            # Add Delete Button for each row
+            from PyQt6.QtWidgets import QPushButton, QWidget, QHBoxLayout
+            
+            # Create a container widget to center the button
+            container = QWidget()
+            layout = QHBoxLayout(container)
+            layout.setContentsMargins(2, 2, 2, 2)
+            layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            btn_delete = QPushButton("Delete")
+            btn_delete.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn_delete.setMinimumWidth(60)
+            btn_delete.setMinimumHeight(24)
+            btn_delete.setStyleSheet("""
+                QPushButton {
+                    background-color: #ef4444; 
+                    color: white; 
+                    border: none;
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    font-weight: bold;
+                    font-size: 11px;
+                }
+                QPushButton:hover {
+                    background-color: #dc2626;
+                }
+                QPushButton:pressed {
+                    background-color: #b91c1c;
+                }
+            """)
+            
+            # Connect signal using closure to capture current rule info
+            # rule["num"] and chain are captured
+            btn_delete.clicked.connect(lambda checked, n=rule["num"], c=chain: self.on_delete_clicked(n, c))
+            
+            layout.addWidget(btn_delete)
+            table.setCellWidget(row_index, 12, container)
+            
+            # Ensure row has enough height
+            table.setRowHeight(row_index, 40)
             
             row_index += 1
 
@@ -181,62 +197,28 @@ class RulesTableHandlerAPI:
         print(f"Filter applied: {chain_name if chain_name else 'All rules shown'}")
         self.refresh_rules_table()
     
-    def on_delete_many_clicked(self):
-        """Xoá rule đã tick hoặc theo chain"""
-        table = self.ui.tableRules
-        selected_nums = []
+    def on_delete_clicked(self, num, chain):
+        """Xử lý khi nút Xóa trên 1 dòng được nhấn"""
+        reply = QMessageBox.question(
+            self.ui, 
+            "Confirm Delete", 
+            f"Are you sure you want to delete rule #{num} from chain {chain}?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, 
+            QMessageBox.StandardButton.No
+        )
 
-        delete_col = table.columnCount() - 1
-
-        # Lấy danh sách rule đã tick (lưu cả chain và num)
-        chain_col = 10  # Cột chain
-        selected_rules = []  # List of (chain, num) tuples
-        for row in range(table.rowCount()):
-            chk_item = table.item(row, delete_col)
-            if chk_item and chk_item.checkState() == Qt.CheckState.Checked:
-                num_item = table.item(row, 0)
-                chain_item = table.item(row, chain_col)
-                if num_item and chain_item:
-                    selected_rules.append((chain_item.text(), num_item.text()))
-
-        if selected_rules:
-            # Lấy tất cả rules từ API để map chain+num thành num thực tế
+        if reply == QMessageBox.StandardButton.Yes:
             try:
-                all_rules = self.client.list_rules()
-                rule_map = {}  # Map (chain, num) -> actual rule
-                for r in all_rules:
-                    rule_map[(r.get("chain", "INPUT"), r["num"])] = r
+                # Call delete with chain info
+                result = self.client.delete_rule(num, chain=chain)
                 
-                # Lấy nums từ selected_rules
-                selected_nums = []
-                for chain, num in selected_rules:
-                    if (chain, num) in rule_map:
-                        selected_nums.append(num)
-                
-                if selected_nums:
-                    print(f"Deleting {len(selected_nums)} chosen rule(s)...")
-                    result = self.client.delete_many_rules(selected_nums)
-                    print(f"✅ Đã xóa {len(result.get('deleted', []))} rule(s)")
-                    if result.get('failed'):
-                        print(f"❌ Không thể xóa {len(result['failed'])} rule(s)")
+                if result.get("status") == "success":
+                    print(f"✅ Rule #{num} deleted from {chain}")
+                    # Refresh table to show changes
+                    self.refresh_rules_table()
+                else:
+                    error = result.get("error", "Unknown error")
+                    QMessageBox.warning(self.ui, "Delete Failed", f"Could not delete rule: {error}")
             except Exception as e:
-                QMessageBox.warning(None, "Lỗi", f"Không thể xóa rules: {e}")
-        else:
-            chain_name = self.ui.editRules.text().strip()
-            if chain_name:
-                print(f"No chosen rule, deleting by chain: {chain_name}")
-                # Lấy tất cả rules của chain và xóa
-                try:
-                    rules = self.client.list_rules()
-                    chain_rules = [r["num"] for r in rules if r.get("chain", "INPUT").upper() == chain_name.upper()]
-                    if chain_rules:
-                        result = self.client.delete_many_rules(chain_rules)
-                        print(f"✅ Đã xóa {len(result.get('deleted', []))} rule(s) từ chain {chain_name}")
-                except Exception as e:
-                    QMessageBox.warning(None, "Lỗi", f"Không thể xóa rules theo chain: {e}")
-            else:
-                print("No chosen rule and no chain name provided.")
-
-        # Refresh sau khi xóa xong
-        self.refresh_rules_table()
+                QMessageBox.critical(self.ui, "Error", f"An error occurred: {str(e)}")
 

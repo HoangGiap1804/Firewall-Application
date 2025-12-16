@@ -85,9 +85,9 @@ class FirewallServiceClient:
         
         return self._request("POST", "rules/add", data=data)
     
-    def delete_rule(self, num: str) -> Dict:
+    def delete_rule(self, num: str, chain: str = "INPUT") -> Dict:
         """Xóa rule"""
-        return self._request("POST", "rules/delete", data={"num": num})
+        return self._request("POST", "rules/delete", data={"num": num, "chain": chain})
     
     def delete_many_rules(self, nums: List[str]) -> Dict:
         """Xóa nhiều rules"""
