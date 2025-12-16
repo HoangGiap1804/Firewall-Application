@@ -5,12 +5,29 @@ from dotenv import load_dotenv
 from email.message import EmailMessage
 from datetime import datetime
 
-load_dotenv()
+# Determine path to backend/.env explicitly
+current_dir = os.path.dirname(os.path.abspath(__file__))
+backend_dir = os.path.dirname(os.path.dirname(current_dir)) # mailer is in backend/notifications/, so up 2 levels?? No.
+# mailer.py is in backend/notifications/
+# backend/ is up 1 level (parent of notifications)
+# wait: os.path.dirname(__file__) -> backend/notifications
+# parent -> backend
+# .env is in backend/.env
+
+config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+try:
+    load_dotenv(config_path)
+except (PermissionError, OSError) as e:
+    # If we can't read the .env file (e.g. permission denied because owned by root),
+    # we just ignore it here. If the app restarts as root (self-elevation), 
+    # it will be able to read it in the restarted process.
+    print(f"Warning: Could not load .env file due to permissions: {e}")
 
 
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
-PASSWORD_EMAIL = os.getenv("PASSWORD_EMAIL")
+# Removed global constants to support dynamic reloading
+# SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+# RECEIVER_EMAIL = os.getenv("RECEIVER_EMAIL")
+# PASSWORD_EMAIL = os.getenv("PASSWORD_EMAIL")
 
 
 def _send_email_in_thread(email_func, *args, **kwargs):
@@ -137,18 +154,18 @@ def _send_attack_alert_sync(attack_type: str, src_ip: str, severity: str, log_ti
 
     # Tạo email
     msg = EmailMessage()
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = RECEIVER_EMAIL
+    msg["From"] = os.getenv("SENDER_EMAIL")
+    msg["To"] = os.getenv("RECEIVER_EMAIL")
     msg["Subject"] = f"[{severity.upper()}] {attack_type} detected from {src_ip}"
     msg.set_content("A new attack was detected. Please view the HTML version for details.")
     msg.add_alternative(html_content, subtype="html")
 
     # Gửi mail
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(SENDER_EMAIL, PASSWORD_EMAIL)
+        server.login(os.getenv("SENDER_EMAIL"), os.getenv("PASSWORD_EMAIL"))
         server.send_message(msg)
 
-    print(f"📧 Cảnh báo '{attack_type}' đã được gửi tới {RECEIVER_EMAIL}!")
+    print(f"📧 Cảnh báo '{attack_type}' đã được gửi tới {os.getenv('RECEIVER_EMAIL')}!")
 
 
 def send_attack_alert(attack_type: str, src_ip: str, severity: str, log_time: str | None = None):
@@ -261,15 +278,15 @@ def _send_malware_alert_sync(malware_type: str, severity: str, log_time: str | N
 """
 
     msg = EmailMessage()
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = RECEIVER_EMAIL
+    msg["From"] = os.getenv("SENDER_EMAIL")
+    msg["To"] = os.getenv("RECEIVER_EMAIL")
     msg["Subject"] = f"[{severity.upper()}] Malware detected ({malware_type})"
     msg.set_content("A malware threat has been detected. Please check the HTML version.")
     msg.add_alternative(html_content, subtype="html")
 
     # send mail
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(SENDER_EMAIL, PASSWORD_EMAIL)
+        server.login(os.getenv("SENDER_EMAIL"), os.getenv("PASSWORD_EMAIL"))
         server.send_message(msg)
 
     print("📧 Đã gửi email cảnh báo mã độc!")
@@ -385,14 +402,14 @@ def _send_performance_alert_sync(resource_type: str, usage_value: str, severity:
 """
 
     msg = EmailMessage()
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = RECEIVER_EMAIL
+    msg["From"] = os.getenv("SENDER_EMAIL")
+    msg["To"] = os.getenv("RECEIVER_EMAIL")
     msg["Subject"] = f"[{severity.upper()}] High {resource_type} Usage: {usage_value}"
     msg.set_content("High system resource usage detected. Please check the HTML version.")
     msg.add_alternative(html_content, subtype="html")
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(SENDER_EMAIL, PASSWORD_EMAIL)
+        server.login(os.getenv("SENDER_EMAIL"), os.getenv("PASSWORD_EMAIL"))
         server.send_message(msg)
 
     print(f"📧 Đã gửi email cảnh báo hiệu năng ({resource_type})!")
@@ -406,3 +423,38 @@ def send_performance_alert(resource_type: str, usage_value: str, severity: str, 
         daemon=True
     )
     thread.start()
+
+
+def send_test_email_sync(sender: str, receiver: str, password: str):
+    """
+    Hàm gửi email test đồng bộ để xác thực cấu hình ngay lập tức.
+    Raise Exception nếu gửi thất bại.
+    """
+    html_content = """\
+<!doctype html>
+<html>
+<body>
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #16a34a;">✅ Email Configuration Verified</h2>
+        <p>This is a test email from your Firewall Application.</p>
+        <p>If you received this, your email settings are correct!</p>
+        <hr>
+        <p style="color: #666; font-size: 12px;">© 2025 Giap Security Monitor</p>
+    </div>
+</body>
+</html>
+"""
+
+    msg = EmailMessage()
+    msg["From"] = sender
+    msg["To"] = receiver
+    msg["Subject"] = "✅ [Test] Firewall Security Email Verification"
+    msg.set_content("This is a test email. Your email configuration is working correctly.")
+    msg.add_alternative(html_content, subtype="html")
+
+    # Thử kết nối và gửi
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+        server.login(sender, password)
+        server.send_message(msg)
+
+    print(f"📧 Test email sent successfully to {receiver}")

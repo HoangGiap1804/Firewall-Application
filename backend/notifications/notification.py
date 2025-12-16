@@ -1,5 +1,5 @@
 import subprocess
-from PySide6.QtCore import QObject, Slot
+
 
 
 def send_notification(title: str, message: str):

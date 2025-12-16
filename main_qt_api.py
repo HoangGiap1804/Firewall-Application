@@ -13,6 +13,7 @@ from backend.rules.handlers.rules_table_handler_api import RulesTableHandlerAPI
 from backend.rules.handlers.add_rule_handler_api import AddRuleHandlerAPI
 from backend.rules.handlers import AvailableRulesHandler
 from backend.sandbox.sandbox_handler import SandboxHandler
+from backend.settings.settings_handler import SettingsHandler
 from frontend.ui_loader import load_all_tabs
 from service.api_client import get_client
 
@@ -42,6 +43,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self._init_add_rule()
         self._init_available_rules()
         self._init_sandbox()
+        self._init_settings()
         
         # Bắt đầu monitoring trên service
         try:
@@ -113,7 +115,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
         # Kết nối signals
         self.ui.buttonSearch.clicked.connect(self.rules_table_handler.on_search_clicked)
-        self.ui.buttonDeleteMany.clicked.connect(self.rules_table_handler.on_delete_many_clicked)
+
         
         # Refresh lần đầu
         self.rules_table_handler.refresh_rules_table()
@@ -150,6 +152,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def _init_sandbox(self):
         """Khởi tạo Sandbox Handler"""
         self.sandbox_handler = SandboxHandler(self.ui)
+
+    def _init_settings(self):
+        """Khởi tạo Settings Handler"""
+        self.settings_handler = SettingsHandler(self.ui)
+
 
     
     def closeEvent(self, event):
