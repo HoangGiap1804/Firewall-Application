@@ -108,6 +108,27 @@ QDateEdit::down-arrow {
         </widget>
        </item>
        <item>
+        <widget class="QLineEdit" name="logSearchInput">
+         <property name="placeholderText">
+          <string>Tìm kiếm...</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLineEdit {
+    padding: 8px;
+    border: 2px solid #3498db;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: white;
+    min-width: 200px;
+}
+
+QLineEdit:focus {
+    border-color: #2980b9;
+}</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="loadLogButton">
          <property name="text">
           <string>Xem Log</string>

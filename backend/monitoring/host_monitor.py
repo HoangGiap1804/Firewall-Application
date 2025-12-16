@@ -5,6 +5,8 @@ import time
 import subprocess
 from PyQt6.QtCore import QObject, QTimer, pyqtSlot
 import psutil
+from datetime import datetime
+from backend.notifications import send_notification, send_performance_alert
 
 
 class HostSystemMonitor(QObject):
@@ -27,7 +29,13 @@ class HostSystemMonitor(QObject):
         self.current_ram_percent = 0
         self.current_temperature = 0
         self.current_network_rx = 0  # bytes per second
+        self.current_network_rx = 0  # bytes per second
         self.current_network_tx = 0  # bytes per second
+
+        # Alert throttling
+        self.last_ram_alert_time = 0
+        self.last_temp_alert_time = 0
+        self.alert_cooldown = 300  # 5 minutes
 
     @pyqtSlot()
     def update_stats(self):
@@ -52,6 +60,27 @@ class HostSystemMonitor(QObject):
         try:
             mem = psutil.virtual_memory()
             self.current_ram_percent = mem.percent
+            
+            # Cảnh báo nếu RAM > 90%
+            if self.current_ram_percent > 90:
+                current_time = time.time()
+                if current_time - self.last_ram_alert_time >= self.alert_cooldown:
+                    self.last_ram_alert_time = current_time
+                    
+                    title = "⚠️ Cảnh báo RAM"
+                    message = f"RAM hệ thống đang ở mức cao: {self.current_ram_percent:.1f}%"
+                    
+                    # 1. Gửi thông báo màn hình
+                    send_notification(title, message)
+                    
+                    # 2. Gửi email cảnh báo
+                    send_performance_alert(
+                        "RAM", 
+                        f"{self.current_ram_percent:.1f}%", 
+                        "critical"
+                    )
+                    print(f"🚨 High RAM detected: {self.current_ram_percent:.1f}% - Alert sent")
+                    
         except Exception as e:
             print("❌ RAM error (host):", e)
             self.current_ram_percent = 0
@@ -87,6 +116,27 @@ class HostSystemMonitor(QObject):
             
             if temp_celsius is not None:
                 self.current_temperature = temp_celsius
+                
+                # Cảnh báo nếu nhiệt độ > 90 độ C
+                if self.current_temperature > 90:
+                    current_time = time.time()
+                    if current_time - self.last_temp_alert_time >= self.alert_cooldown:
+                        self.last_temp_alert_time = current_time
+                        
+                        title = "⚠️ Cảnh báo Nhiệt độ cao"
+                        message = f"Nhiệt độ CPU đang ở mức cao: {self.current_temperature:.1f}°C"
+                        
+                        # 1. Gửi thông báo màn hình
+                        send_notification(title, message)
+                        
+                        # 2. Gửi email cảnh báo
+                        send_performance_alert(
+                            "Temperature", 
+                            f"{self.current_temperature:.1f}°C", 
+                            "critical"
+                        )
+                        print(f"🔥 High Temperature detected: {self.current_temperature:.1f}°C - Alert sent")
+                        
             else:
                 self.current_temperature = 0
                 

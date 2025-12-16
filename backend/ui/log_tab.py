@@ -102,7 +102,7 @@ def block_ip(ip):
         print(f"❌ Lỗi khi chặn IP {ip}: {e}")
 
 class LogTab(QtWidgets.QWidget):
-    def __init__(self, tableWidget, date_edit=None, load_button=None, realtime_button=None):
+    def __init__(self, tableWidget, date_edit=None, load_button=None, realtime_button=None, search_input=None):
         super().__init__()
         self.tableWidget = tableWidget
 
@@ -128,9 +128,10 @@ class LogTab(QtWidgets.QWidget):
         self.dateEdit = date_edit
         self.loadLogButton = load_button
         self.realtimeLogButton = realtime_button
+        self.searchInput = search_input
         
         # Nếu không có widget, thử tìm từ parent
-        if not self.dateEdit or not self.loadLogButton or not self.realtimeLogButton:
+        if not self.dateEdit or not self.loadLogButton or not self.realtimeLogButton or not self.searchInput:
             self._find_widgets()
         
         # Thiết lập UI cho date picker
@@ -143,29 +144,27 @@ class LogTab(QtWidgets.QWidget):
         self.process.readyReadStandardOutput.connect(self.read_log)
         self.process.start()
     
+    
     def _find_widgets(self):
         """Tìm các widget cần thiết từ parent nếu chưa được truyền vào"""
-        if not self.dateEdit:
-            parent = self.tableWidget.parent()
-            while parent:
-                date_edit = parent.findChild(QtWidgets.QDateEdit, "logDateEdit")
-                if date_edit:
-                    self.dateEdit = date_edit
-                    break
-                parent = parent.parent()
-        
-        if not self.loadLogButton or not self.realtimeLogButton:
-            parent = self.tableWidget.parent()
-            while parent:
-                load_button = parent.findChild(QtWidgets.QPushButton, "loadLogButton")
-                realtime_button = parent.findChild(QtWidgets.QPushButton, "realtimeLogButton")
-                if load_button:
-                    self.loadLogButton = load_button
-                if realtime_button:
-                    self.realtimeLogButton = realtime_button
-                if self.loadLogButton and self.realtimeLogButton:
-                    break
-                parent = parent.parent()
+        parent = self.tableWidget.parent()
+        while parent:
+            if not self.dateEdit:
+                self.dateEdit = parent.findChild(QtWidgets.QDateEdit, "logDateEdit")
+            
+            if not self.loadLogButton:
+                self.loadLogButton = parent.findChild(QtWidgets.QPushButton, "loadLogButton")
+                
+            if not self.realtimeLogButton:
+                self.realtimeLogButton = parent.findChild(QtWidgets.QPushButton, "realtimeLogButton")
+                
+            if not self.searchInput:
+                self.searchInput = parent.findChild(QtWidgets.QLineEdit, "logSearchInput")
+            
+            if self.dateEdit and self.loadLogButton and self.realtimeLogButton and self.searchInput:
+                break
+                
+            parent = parent.parent()
     
     def _setup_date_picker(self):
         """Thiết lập date picker và kết nối signals"""
@@ -179,10 +178,13 @@ class LogTab(QtWidgets.QWidget):
                 # Kết nối signal cho nút "Xem Log"
                 if self.loadLogButton:
                     self.loadLogButton.clicked.connect(self.on_load_log_clicked)
-                
-                # Kết nối signal cho nút "Log Real-time"
+                               # Kết nối signal cho nút "Log Real-time"
                 if self.realtimeLogButton:
                     self.realtimeLogButton.clicked.connect(self.on_realtime_log_clicked)
+                    
+                # Kết nối signal cho search input
+                if self.searchInput:
+                    self.searchInput.textChanged.connect(self.filter_logs)
             else:
                 print("⚠️ Không tìm thấy date picker widget")
         except Exception as e:
@@ -261,6 +263,29 @@ class LogTab(QtWidgets.QWidget):
             import traceback
             traceback.print_exc()
             QMessageBox.critical(None, "Lỗi", f"Lỗi khi chuyển sang real-time mode: {str(e)}")
+    
+    def filter_logs(self, text):
+        """Lọc log dựa trên text tìm kiếm"""
+        try:
+            search_text = text.lower()
+            row_count = self.tableWidget.rowCount()
+            
+            for row in range(row_count):
+                should_show = False
+                if not search_text:
+                    should_show = True
+                else:
+                    # Kiểm tra xem text có xuất hiện trong bất kỳ cột nào không
+                    for col in range(self.tableWidget.columnCount()):
+                        item = self.tableWidget.item(row, col)
+                        if item and search_text in item.text().lower():
+                            should_show = True
+                            break
+                
+                self.tableWidget.setRowHidden(row, not should_show)
+                
+        except Exception as e:
+            print(f"❌ Lỗi khi lọc log: {e}")
     
     def _update_log_file(self):
         """Cập nhật file log theo ngày hiện tại"""
