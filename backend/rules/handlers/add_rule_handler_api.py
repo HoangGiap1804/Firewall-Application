@@ -51,7 +51,7 @@ class AddRuleHandlerAPI:
         interface_out = self._get_widget_text("editAddRuleOut")
         protocol = self._get_combo_text("comboAddRuleProtocol")
         action = self._get_combo_text("comboAddRuleAction")
-        chain = self._get_widget_text("editAddRuleChain") or "OUTPUT"
+        chain = self._get_widget_text("editAddRuleChain") or "INPUT"
         
         # Validate required fields
         protocol_normalized = self._normalize_protocol(protocol)

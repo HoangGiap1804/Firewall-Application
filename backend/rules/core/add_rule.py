@@ -6,7 +6,7 @@ class IptablesHandler(QObject):
     """Xử lý thêm rule iptables"""
 
     @pyqtSlot(str, str, str, str, str, str, str)
-    def addRule(self, ip, port, protocol, action, interface, state, chain="OUTPUT"):
+    def addRule(self, ip, port, protocol, action, interface, state, chain="INPUT"):
         if not protocol or not action:
             print("Protocol và Action là bắt buộc!")
             return
