@@ -6,7 +6,37 @@ import time
 from PyQt6.QtCore import QObject, QTimer, pyqtSignal, QThread
 from PyQt6.QtWidgets import QLabel
 from service.api_client import get_client
+from backend.monitoring.ssh_monitor import SSHMonitor
+from backend.sandbox.vmware_manager import VMWareManager
+from dotenv import load_dotenv
+import os
 
+
+class LocalStatsWorker(QThread):
+    """Worker thread để lấy local stats (SSH/VMWare)"""
+    data_loaded = pyqtSignal(tuple) # (used, total, cpu)
+    
+    def __init__(self, monitor_type, config):
+        super().__init__()
+        self.monitor_type = monitor_type
+        self.config = config
+        
+    def run(self):
+        try:
+            if self.monitor_type == 'ssh':
+                monitor = SSHMonitor(self.config['user'], self.config['host'])
+                stats = monitor.get_stats() # (used, total, cpu)
+                self.data_loaded.emit(stats)
+            elif self.monitor_type == 'vmware':
+                # Note: creating manager every time might be slow? 
+                # Better to pass instance, but QThread safety?
+                # VMWareManager is just subprocess calls, so it's stateless mostly.
+                manager = VMWareManager(self.config['vmx'], self.config['user'], self.config['pass'])
+                stats = manager.get_guest_stats()
+                self.data_loaded.emit(stats)
+        except Exception as e:
+            print(f"Local Stats Error: {e}")
+            self.data_loaded.emit((0,0,0))
 
 class MonitoringDataWorker(QThread):
     """Worker thread để lấy monitoring data không block UI"""
@@ -22,7 +52,8 @@ class MonitoringDataWorker(QThread):
             data = self.client.get_monitoring_data()
             self.data_loaded.emit(data)
         except Exception as e:
-            print(f"❌ Lỗi khi lấy monitoring data: {e}")
+            # print(f"❌ Lỗi khi lấy monitoring data: {e}") 
+            # Silent fail is better for repetitive poll
             self.data_loaded.emit({})
 
 
@@ -48,6 +79,11 @@ class SystemMonitorAPI(QObject):
         self._label_service = None
         self._cache_widgets()
         
+        # Local Monitor Config
+        self.local_monitor_type = None
+        self.local_config = {}
+        self._load_local_config()
+
         # Giá trị hiện tại để chart có thể truy cập
         self.current_cpu_percent = 0
         self.current_ram_percent = 0
@@ -56,7 +92,29 @@ class SystemMonitorAPI(QObject):
         self.current_network_tx = 0
         
         self.worker = None  # Worker thread
+        self.local_worker = None
         self.is_updating = False  # Flag để tránh update đồng thời
+
+    def _load_local_config(self):
+        env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+        load_dotenv(env_path)
+        
+        ssh_host = os.getenv("SSH_MONITOR_HOST")
+        ssh_user = os.getenv("SSH_MONITOR_USER")
+        
+        if ssh_host and ssh_user:
+            self.local_monitor_type = 'ssh'
+            self.local_config = {'host': ssh_host, 'user': ssh_user}
+            return
+
+        vmx = os.getenv("VMWARE_VMX_PATH")
+        if vmx:
+            self.local_monitor_type = 'vmware'
+            self.local_config = {
+                'vmx': vmx, 
+                'user': os.getenv("VMWARE_USER"), 
+                'pass': os.getenv("VMWARE_PASSWORD")
+            }
     
     def _cache_widgets(self):
         """Cache các widgets một lần để tránh findChild() mỗi lần"""
@@ -78,11 +136,33 @@ class SystemMonitorAPI(QObject):
         
         self.is_updating = True
         
-        # Tạo và chạy worker thread
+        # Update from API (Always needed for Disk/Net/etc)
         self.worker = MonitoringDataWorker(self.client)
         self.worker.data_loaded.connect(self._on_data_loaded)
         self.worker.finished.connect(lambda: setattr(self, 'is_updating', False))
         self.worker.start()
+        
+        # Update from Local (SSH/VMWare) for CPU/RAM overwrite
+        # Make sure to reload config? Maybe occasionally.
+        if self.local_monitor_type:
+            self.local_worker = LocalStatsWorker(self.local_monitor_type, self.local_config)
+            self.local_worker.data_loaded.connect(self._on_local_data_loaded)
+            self.local_worker.start()
+
+    def _on_local_data_loaded(self, stats):
+        used, total, cpu = stats
+        
+        # Overwrite CPU
+        self.current_cpu_percent = cpu
+        if self._label_cpu:
+            self._label_cpu.setText(f"{cpu:.1f}%")
+            
+        # Overwrite RAM
+        if total > 0:
+            percent = (used / total) * 100
+            self.current_ram_percent = percent
+            if self._label_ram:
+                self._label_ram.setText(f"{used:.1f} MB ({percent:.1f}%)")
     
     def _on_data_loaded(self, data):
         """Xử lý khi monitoring data đã được load xong"""

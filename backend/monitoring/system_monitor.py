@@ -4,6 +4,9 @@ import subprocess
 from PyQt6.QtCore import QObject, QTimer, pyqtSlot
 from PyQt6.QtWidgets import QLabel
 from backend.notifications import send_malware_alert, send_performance_alert
+from backend.sandbox.vmware_manager import VMWareManager
+from backend.monitoring.ssh_monitor import SSHMonitor
+from dotenv import load_dotenv
 import re
 import psutil
 
@@ -26,7 +29,32 @@ class SystemMonitor(QObject):
         self.prev_net_tx = 0
 
         # Tìm interface veth tương ứng
+        # Tìm interface veth tương ứng
         self.veth_iface = self.find_veth()
+
+        # VMWare Instance
+        self._load_vmware_config()
+
+    def _load_vmware_config(self):
+        env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+        load_dotenv(env_path)
+        self.vmx_path = os.getenv("VMWARE_VMX_PATH")
+        self.vm_user = os.getenv("VMWARE_USER")
+        self.vm_pass = os.getenv("VMWARE_PASSWORD")
+        
+        self.vmware_manager = None
+        if self.vmx_path and self.vm_user and self.vm_pass:
+             try:
+                 self.vmware_manager = VMWareManager(self.vmx_path, self.vm_user, self.vm_pass)
+                 self.vmware_manager = VMWareManager(self.vmx_path, self.vm_user, self.vm_pass)
+             except:
+                 pass
+
+        self.ssh_host = os.getenv("SSH_MONITOR_HOST")
+        self.ssh_user = os.getenv("SSH_MONITOR_USER")
+        self.ssh_monitor = None
+        if self.ssh_host and self.ssh_user:
+            self.ssh_monitor = SSHMonitor(self.ssh_user, self.ssh_host)
 
          # --- THÊM ---
         self.prev_cpu_percent = 0
@@ -50,13 +78,65 @@ class SystemMonitor(QObject):
     # =======================
     @pyqtSlot()
     def update_stats(self):
-        self.update_cpu()
-        self.update_ram()
-        self.update_disk()
-        self.update_network()
-        self.update_temperature()
-        self.update_network_traffic()
-        self.update_services()
+        # Refresh config in case it changed at runtime
+        self._load_vmware_config()
+        
+        if self.ssh_monitor:
+            self.update_stats_ssh()
+        elif self.vmware_manager:
+            # Use VMWare Logic
+            self.update_stats_vmware()
+        else:
+            # Use Systemd-nspawn Logic
+            self.update_cpu()
+            self.update_ram()
+            self.update_disk()
+            self.update_network()
+            # self.update_temperature() # Temp usually host anyway, maybe keep?
+            # self.update_network_traffic() # Host metrics
+            self.update_services()
+
+    def update_stats_vmware(self):
+        """Fetch and update stats from VMWare guest"""
+        try:
+             used, total, cpu = self.vmware_manager.get_guest_stats()
+             
+             # RAM
+             percent_ram = (used / total * 100) if total > 0 else 0
+             self.current_ram_percent = percent_ram
+             label_ram = self.ui.findChild(QLabel, "label_ram")
+             if label_ram:
+                 label_ram.setText(f"{used:.1f} MB ({percent_ram:.1f}%)")
+                 
+             # CPU
+             self.current_cpu_percent = cpu
+             label_cpu = self.ui.findChild(QLabel, "label_cpu")
+             if label_cpu:
+                 label_cpu.setText(f"{cpu:.1f}%")
+                 
+        except Exception as e:
+            print(f"VMWare Stats Error: {e}")
+
+    def update_stats_ssh(self):
+        """Fetch and update stats via SSH"""
+        try:
+             used, total, cpu = self.ssh_monitor.get_stats()
+             
+             # RAM
+             percent_ram = (used / total * 100) if total > 0 else 0
+             self.current_ram_percent = percent_ram
+             label_ram = self.ui.findChild(QLabel, "label_ram")
+             if label_ram:
+                 label_ram.setText(f"{used:.1f} MB ({percent_ram:.1f}%)")
+                 
+             # CPU
+             self.current_cpu_percent = cpu
+             label_cpu = self.ui.findChild(QLabel, "label_cpu")
+             if label_cpu:
+                 label_cpu.setText(f"{cpu:.1f}%")
+                 
+        except Exception as e:
+            print(f"SSH Stats Error: {e}")
 
     # =======================
     # === RAM ===
