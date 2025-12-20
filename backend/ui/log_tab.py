@@ -143,6 +143,10 @@ class LogTab(QtWidgets.QWidget):
         self.process.setArguments(["-f", "/var/log/kern.log"])
         self.process.readyReadStandardOutput.connect(self.read_log)
         self.process.start()
+
+        # Rate limiting for email alerts
+        self.last_alert_time = {}
+
     
     
     def _find_widgets(self):
@@ -548,22 +552,34 @@ class LogTab(QtWidgets.QWidget):
                     message = f"Từ IP: {src_ip}\nThời gian: {log_time}\nMức độ: {severity}"
                     bg = QColor("#db5858")
 
-                    # 🔒 Chặn IP nếu chưa chặn
+                    # 📢 Gửi thông báo hệ thống
+                    send_notification(title, message)
+
+                    # 🔒 Chặn IP (Luôn chặn để bảo vệ)
                     if src_ip and src_ip not in blocked_ips:
                         blocked_ips.add(src_ip)
                         threading.Thread(target=block_ip, args=(src_ip,), daemon=True).start()
 
-                    # 📢 Gửi thông báo hệ thống
-                    send_notification(title, message)
+                    # 📧 Email Alert (Throttled: 1 email / 1 phút)
+                    import time
+                    current_time = time.time()
+                    last_alert = self.last_alert_time.get(attack_type, 0)
+                    
+                    if current_time - last_alert >= 60: # 60 seconds throttle
+                        def send_alert_thread():
+                            try:
+                                send_attack_alert(attack_type, src_ip, severity, log_time)
+                            except Exception as e:
+                                print("❌ Error sending alert email:", e)
 
-                    # 📧 Gửi email cảnh báo
-                    def send_alert_thread():
-                        try:
-                            send_attack_alert(attack_type, src_ip, severity, log_time)
-                        except Exception as e:
-                            print("❌ Error sending alert email:", e)
-
-                    threading.Thread(target=send_alert_thread, daemon=True).start()
+                        threading.Thread(target=send_alert_thread, daemon=True).start()
+          
+                        # Cập nhật thời gian gửi mail cuối cùng
+                        self.last_alert_time[attack_type] = current_time
+                        print(f"📧 Alert email sent for {attack_type}")
+                    else:
+                        print(f"⏳ Skipped email for {attack_type} due to rate limit")
+                    
                     break  # ✅ Dừng lại nếu đã match 1 loại tấn công
 
 

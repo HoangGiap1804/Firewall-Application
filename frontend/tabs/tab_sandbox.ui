@@ -105,39 +105,46 @@ color: #34495e;
           </property>
          </widget>
         </item>
-         <item>
-          <widget class="QPushButton" name="btn_importImage">
-           <property name="text">
-            <string>Send File</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: #27ae60; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btn_run_sandbox">
-           <property name="text">
-            <string>Run Test</string>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: #e67e22; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btn_stop_sandbox">
-           <property name="text">
-            <string>Stop Test</string>
-           </property>
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: #c0392b; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
-           </property>
-          </widget>
-         </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_sandbox_actions">
+        <property name="spacing">
+         <number>15</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="btn_importImage">
+          <property name="text">
+           <string>Send File</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #27ae60; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_run_sandbox">
+          <property name="text">
+           <string>Run Test</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #e67e22; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_stop_sandbox">
+          <property name="text">
+           <string>Stop Test</string>
+          </property>
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #c0392b; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>

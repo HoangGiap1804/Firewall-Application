@@ -53,6 +53,7 @@ class AvailableRulesHandler(QObject):
         self.outbound_rules = []  # Lưu danh sách outbound rules đã thêm (format: {"protocol": "tcp", "port": "80", "rule_info": "TCP:80"})
         self._load_outbound_rules()  # Load rules từ file
         self._init_outbound_ui()
+        self._hide_removed_features()
     
     def _build_rule_map(self):
         """Tạo map checkbox -> group name"""
@@ -61,10 +62,10 @@ class AvailableRulesHandler(QObject):
             "checkBoxICMPFlood": "ICMP Flood",
             "checkBoxSYNFlood": "SYN Flood",
             "checkBoxPortScan": "Port Scan",
-            "checkBoxIpSpoofing": "IP Spoofing",
-            "checkBoxInvalidPacket": "Invalid Packet",
-            "checkBoxBroadcast": "Broadcast Control",
-            "checkBoxOutbound": "Outbound Protection",
+            # "checkBoxIpSpoofing": "IP Spoofing",      # Hidden
+            # "checkBoxInvalidPacket": "Invalid Packet", # Hidden
+            # "checkBoxBroadcast": "Broadcast Control",  # Hidden
+            # "checkBoxOutbound": "Outbound Protection", # Hidden
             "checkBoxFinXmasNullScan": "FIN/XMAS/NULL Scan",
             "checkBoxSSH_FTP": "SSH/FTP Brute Force",
         }
@@ -493,3 +494,21 @@ class AvailableRulesHandler(QObject):
             import traceback
             traceback.print_exc()
 
+
+    def _hide_removed_features(self):
+        """Ẩn các tính năng đã bị loại bỏ khỏi giao diện"""
+        widgets_to_hide = [
+            "checkBoxBroadcast",
+            "checkBoxIpSpoofing", 
+            "checkBoxInvalidPacket",
+            "checkBoxOutbound",
+            "listWidgetOutboundRules", 
+            "buttonAddOutboundRule",
+            "comboBoxProtocol",
+            "lineEditPort"
+        ]
+        
+        for widget_name in widgets_to_hide:
+            if hasattr(self.ui, widget_name):
+                widget = getattr(self.ui, widget_name)
+                widget.setVisible(False)

@@ -26,6 +26,10 @@ class SandboxHandler:
         self.output_buffer = ""
         self.error_buffer = ""
         
+        # VMware State tracking
+        self.vmware_manager = None
+        self.current_vm_script = None
+        
         self._setup_connections()
         
     def _setup_connections(self):
@@ -157,7 +161,7 @@ class SandboxHandler:
             except Exception as e:
                 QMessageBox.critical(self.ui, "VMWare Error", f"Failed to send file: {e}")
             return
-
+            
         # Fallback to Original systemd-nspawn Logic
         
         # Sandbox paths
@@ -223,37 +227,50 @@ class SandboxHandler:
             try:
                 manager = VMWareManager(vmx, user, password)
                 
-                # Revert to snapshot?
-                # For safety, ask user or auto-revert.
-                # Since user wants "monitor", maybe they don't want to revert immediately if they just sent the file?
-                # Usually: Revert -> Copy (again?) -> Run.
-                # If we rely on on_send_clicked having done the copy, we can't revert NOW.
-                # Correct flow: Revert -> Start -> Copy -> Run.
-                # If we revert now, we lose the file we just sent in on_send_clicked if on_send_clicked didn't account for snapshot state.
-                # BUT on_send_clicked copied to RUNNING VM.
-                # If we don't revert, we run in dirty state.
-                
-                # User instructions: 
-                # 1. Send File (copies to current state)
-                # 2. Run Test (executes)
-                
-                # Execute
+                # Setup state for Stop button
+                self.vmware_manager = manager
                 dest_name = os.path.basename(path) if path else "sample"
+                self.current_vm_script = dest_name
+                
+                # Check IP for monitoring debugging
+                try:
+                    current_ip = manager.get_ip()
+                    configured_ip = os.getenv("SSH_MONITOR_HOST")
+                    
+                    if current_ip and configured_ip and current_ip != configured_ip:
+                         QMessageBox.warning(self.ui, "Configuration Mismatch", 
+                             f"Host Mismatch Detected!\n\n"
+                             f"VM Configured (SSH): {configured_ip}\n"
+                             f"VM Actual (Detected): {current_ip}\n\n"
+                             f"The 'No route to host' errors are likely because of this.\n"
+                             f"Please update your .env file: SSH_MONITOR_HOST={current_ip}\nAnd restart the app."
+                         )
+                    elif current_ip:
+                        print(f"VM IP Verified: {current_ip}")
+                except Exception as ip_err:
+                    print(f"IP Check Failed: {ip_err}")
+
                 guest_dest = f"/home/{user}/{dest_name}" # SAME path as send
-                
-                # Make executable? vmrun runProgramInGuest might need help.
-                # Usually on linux we need `chmod +x`.
-                # We can run bash -c "chmod +x ... && ./..."
-                
                 cmd = f"chmod +x '{guest_dest}' && '{guest_dest}'"
                 
                 print(f"Running in VM: {cmd}")
-                output = manager.run_program("/bin/bash", f"-c \"{cmd}\"")
+                # Use no_wait=True so we don't block UI for long running scripts (like ram spike)
+                manager.run_program("/bin/bash", ["-c", cmd], no_wait=True)
                 
-                QMessageBox.information(self.ui, "VMWare Execution Finished", f"Output:\n{output}")
+                # Update UI to Running state
+                self.ui.btn_run_sandbox.setEnabled(False)
+                self.ui.btn_stop_sandbox.setEnabled(True)
+                self.ui.btn_importImage.setEnabled(False)
+                
+                QMessageBox.information(self.ui, "VMWare Execution Started", f"Program started in VM (non-blocking).\nCommand: {cmd}\n\nCheck monitoring charts for effects.\n\nClick 'Stop Test' to kill the process.")
                 
             except Exception as e:
                 QMessageBox.critical(self.ui, "VMWare Execution Failed", str(e))
+                # Reset UI on failure
+                self.ui.btn_run_sandbox.setEnabled(True)
+                self.ui.btn_stop_sandbox.setEnabled(False)
+                self.ui.btn_importImage.setEnabled(True)
+                self.vmware_manager = None
                 
             return
 
@@ -316,6 +333,37 @@ class SandboxHandler:
         
     def on_stop_clicked(self):
         """Handle Stop Test button"""
+        # Handle VMware Mode
+        if self.vmware_manager and self.current_vm_script:
+            try:
+                # Use pkill to kill the script by name in the guest
+                # Note: We match the script name.
+                # Assuming the script is something like 'ram.sh'
+                script_name = self.current_vm_script
+                print(f"Stopping VMware script: {script_name}")
+                
+                # Attempt to kill all instances of this script
+                # We use 'pkill -f' to match full command line which is robust
+                cmd = ["-c", f"pkill -9 -f '{script_name}'"]
+                self.vmware_manager.run_program("/usr/bin/pkill", ["-f", script_name], no_wait=True)
+                
+                # Also try killall just in case
+                self.vmware_manager.run_program("/usr/bin/killall", ["-9", script_name], no_wait=True)
+                
+                QMessageBox.information(self.ui, "Stopped", f"Sent kill signal to '{script_name}' in VM.")
+                
+            except Exception as e:
+                QMessageBox.warning(self.ui, "Stop Warning", f"Failed to send kill command: {e}")
+            
+            # Reset UI
+            self.ui.btn_run_sandbox.setEnabled(True)
+            self.ui.btn_stop_sandbox.setEnabled(False)
+            self.ui.btn_importImage.setEnabled(True)
+            self.vmware_manager = None
+            self.current_vm_script = None
+            return
+
+        # Handle nspawn Mode
         if self.process.state() == QProcess.ProcessState.Running:
             self.process.terminate()
             
@@ -326,8 +374,7 @@ class SandboxHandler:
                 kill_cmd = ["pkexec"] + kill_cmd
                 
             QProcess.execute(kill_cmd[0], kill_cmd[1:])
-
-            
+    
     def on_ready_read_stdout(self):
         data = self.process.readAllStandardOutput().data().decode("utf-8", errors="ignore")
         self.output_buffer += data

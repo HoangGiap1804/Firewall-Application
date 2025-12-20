@@ -109,94 +109,6 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
         <number>15</number>
        </property>
        <item>
-        <widget class="QFrame" name="frameBroadcast">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>55</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QFrame#frameBroadcast {
-    border: 1px solid #d0d0d0;
-    border-radius: 6px;
-    background-color: #ffffff;
-    padding: 8px;
-}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_20">
-          <property name="spacing">
-           <number>10</number>
-          </property>
-          <property name="leftMargin">
-           <number>8</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>8</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="labelBroadcast">
-            <property name="text">
-             <string>Broadcast Control</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">font-size: 13px; font-weight: 500;</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_Broadcast">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBoxBroadcast">
-            <property name="maximumSize">
-             <size>
-              <width>50</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QCheckBox::indicator {
-    width: 40px;
-    height: 20px;
-    border-radius: 10px;
-    background-color: #ddd;
-}
-QCheckBox::indicator:checked {
-    background-color: #4cd964;
-}</string>
-            </property>
-            <property name="text">
-             <string />
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <widget class="QFrame" name="frameSSH_FTP">
          <property name="minimumSize">
           <size>
@@ -373,6 +285,94 @@ QCheckBox::indicator:checked {
         </widget>
        </item>
        <item>
+        <widget class="QFrame" name="framePortScan">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>55</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QFrame#framePortScan {
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    background-color: #ffffff;
+    padding: 8px;
+}</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_16">
+          <property name="spacing">
+           <number>10</number>
+          </property>
+          <property name="leftMargin">
+           <number>8</number>
+          </property>
+          <property name="topMargin">
+           <number>4</number>
+          </property>
+          <property name="rightMargin">
+           <number>8</number>
+          </property>
+          <property name="bottomMargin">
+           <number>4</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="labelPortScan">
+            <property name="text">
+             <string>TCP-based Port Scanning</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">font-size: 13px; font-weight: 500;</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_PortScan">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxPortScan">
+            <property name="maximumSize">
+             <size>
+              <width>50</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QCheckBox::indicator {
+    width: 40px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: #ddd;
+}
+QCheckBox::indicator:checked {
+    background-color: #4cd964;
+}</string>
+            </property>
+            <property name="text">
+             <string />
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QFrame" name="frameICMPFlood">
          <property name="minimumSize">
           <size>
@@ -435,270 +435,6 @@ QCheckBox::indicator:checked {
           </item>
           <item>
            <widget class="QCheckBox" name="checkBoxICMPFlood">
-            <property name="maximumSize">
-             <size>
-              <width>50</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QCheckBox::indicator {
-    width: 40px;
-    height: 20px;
-    border-radius: 10px;
-    background-color: #ddd;
-}
-QCheckBox::indicator:checked {
-    background-color: #4cd964;
-}</string>
-            </property>
-            <property name="text">
-             <string />
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QFrame" name="frameIpSpoofing">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>55</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QFrame#frameIpSpoofing {
-    border: 1px solid #d0d0d0;
-    border-radius: 6px;
-    background-color: #ffffff;
-    padding: 8px;
-}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_11">
-          <property name="spacing">
-           <number>10</number>
-          </property>
-          <property name="leftMargin">
-           <number>8</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>8</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="labelIpSpoofing">
-            <property name="text">
-             <string>IP Spoofing</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">font-size: 13px; font-weight: 500;</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_IpSpoofing">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBoxIpSpoofing">
-            <property name="maximumSize">
-             <size>
-              <width>50</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QCheckBox::indicator {
-    width: 40px;
-    height: 20px;
-    border-radius: 10px;
-    background-color: #ddd;
-}
-QCheckBox::indicator:checked {
-    background-color: #4cd964;
-}</string>
-            </property>
-            <property name="text">
-             <string />
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QFrame" name="frameInvalidPacket">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>55</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QFrame#frameInvalidPacket {
-    border: 1px solid #d0d0d0;
-    border-radius: 6px;
-    background-color: #ffffff;
-    padding: 8px;
-}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_12">
-          <property name="spacing">
-           <number>10</number>
-          </property>
-          <property name="leftMargin">
-           <number>8</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>8</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="labelInvalidPacket">
-            <property name="text">
-             <string>Invalid Packet</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">font-size: 13px; font-weight: 500;</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_InvalidPacket">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBoxInvalidPacket">
-            <property name="maximumSize">
-             <size>
-              <width>50</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QCheckBox::indicator {
-    width: 40px;
-    height: 20px;
-    border-radius: 10px;
-    background-color: #ddd;
-}
-QCheckBox::indicator:checked {
-    background-color: #4cd964;
-}</string>
-            </property>
-            <property name="text">
-             <string />
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QFrame" name="framePortScan">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>55</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QFrame#framePortScan {
-    border: 1px solid #d0d0d0;
-    border-radius: 6px;
-    background-color: #ffffff;
-    padding: 8px;
-}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_16">
-          <property name="spacing">
-           <number>10</number>
-          </property>
-          <property name="leftMargin">
-           <number>8</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>8</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="labelPortScan">
-            <property name="text">
-             <string>Port Scan</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">font-size: 13px; font-weight: 500;</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_PortScan">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBoxPortScan">
             <property name="maximumSize">
              <size>
               <width>50</width>
@@ -806,369 +542,6 @@ QCheckBox::indicator:checked {
             </property>
             <property name="text">
              <string />
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </widget>
-   </item>
-   <item>
-    <widget class="QScrollArea" name="scrollAreaOutbound">
-     <property name="styleSheet">
-      <string notr="true">QScrollArea {
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    background-color: #f8f9fa;
-}
-
-QScrollBar:vertical {
-    border: none;
-    background: #f5f5f5;
-    width: 14px;
-    border-radius: 7px;
-    margin: 2px;
-}
-
-QScrollBar::handle:vertical {
-    background: #9b59b6;
-    border-radius: 7px;
-    min-height: 30px;
-    margin: 2px;
-}
-
-QScrollBar::handle:vertical:hover {
-    background: #8e44ad;
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
-}</string>
-     </property>
-     <property name="widgetResizable">
-      <bool>true</bool>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>400</width>
-       <height>0</height>
-      </size>
-     </property>
-     <widget class="QWidget" name="scrollAreaWidgetContentsOutbound">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>398</width>
-        <height>787</height>
-       </rect>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_Outbound">
-       <property name="spacing">
-        <number>12</number>
-       </property>
-       <property name="leftMargin">
-        <number>15</number>
-       </property>
-       <property name="topMargin">
-        <number>15</number>
-       </property>
-       <property name="rightMargin">
-        <number>15</number>
-       </property>
-       <property name="bottomMargin">
-        <number>15</number>
-       </property>
-       <item>
-        <widget class="QFrame" name="frameOutbound">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>55</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QFrame#frameOutbound {
-    border: 1px solid #d0d0d0;
-    border-radius: 6px;
-    background-color: #ffffff;
-    padding: 8px;
-}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_13">
-          <property name="spacing">
-           <number>10</number>
-          </property>
-          <property name="leftMargin">
-           <number>8</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>8</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="labelOutbound">
-            <property name="text">
-             <string>Outbound Protection</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">font-size: 13px; font-weight: 500;</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_Outbound">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBoxOutbound">
-            <property name="maximumSize">
-             <size>
-              <width>50</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QCheckBox::indicator {
-    width: 40px;
-    height: 20px;
-    border-radius: 10px;
-    background-color: #ddd;
-}
-QCheckBox::indicator:checked {
-    background-color: #4cd964;
-}</string>
-            </property>
-            <property name="text">
-             <string />
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QFrame" name="frameOutboundAdd">
-         <property name="styleSheet">
-          <string notr="true">QFrame#frameOutboundAdd {
-    border: 2px solid #3498db;
-    border-radius: 8px;
-    background-color: #ffffff;
-    padding: 12px;
-}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_OutboundAdd">
-          <property name="spacing">
-           <number>10</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="labelOutboundAddTitle">
-            <property name="text">
-             <string>Thêm Port và Giao thức</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">font-size: 14px; font-weight: 600; color: #3498db;</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_Protocol">
-            <property name="spacing">
-             <number>8</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="labelProtocol">
-              <property name="text">
-               <string>Giao thức:</string>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>80</width>
-                <height>0</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QComboBox" name="comboBoxProtocol">
-              <property name="styleSheet">
-               <string notr="true">QComboBox {
-    padding: 5px;
-    padding-left: 8px;
-    border: 1px solid #d0d0d0;
-    border-radius: 4px;
-    background-color: white;
-}
-QComboBox:hover {
-    border-color: #3498db;
-}
-QComboBox::drop-down {
-    border: none;
-    padding-right: 5px;
-}
-QComboBox QAbstractItemView {
-    border: 1px solid #d0d0d0;
-    border-radius: 4px;
-    background-color: white;
-    padding: 2px;
-    selection-background-color: #3498db;
-    selection-color: white;
-}
-QComboBox QAbstractItemView::item {
-    padding: 5px;
-    padding-left: 8px;
-    min-height: 20px;
-    color: #333333;
-    background-color: white;
-}
-QComboBox QAbstractItemView::item:hover {
-    background-color: #e3f2fd;
-    color: #333333;
-}
-QComboBox QAbstractItemView::item:selected {
-    background-color: #3498db;
-    color: white;
-}</string>
-              </property>
-              <item>
-               <property name="text">
-                <string>TCP</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>UDP</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>ICMP</string>
-               </property>
-              </item>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_Port">
-            <property name="spacing">
-             <number>8</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="labelPort">
-              <property name="text">
-               <string>Port:</string>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>80</width>
-                <height>0</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="lineEditPort">
-              <property name="placeholderText">
-               <string>Ví dụ: 80, 443, 53</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QLineEdit {
-    padding: 5px;
-    border: 1px solid #d0d0d0;
-    border-radius: 4px;
-    background-color: white;
-}
-QLineEdit:hover {
-    border-color: #3498db;
-}
-QLineEdit:focus {
-    border-color: #3498db;
-    border-width: 2px;
-}</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QPushButton" name="buttonAddOutboundRule">
-            <property name="text">
-             <string>Thêm Rule</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-    background-color: #3498db;
-    color: white;
-    padding: 8px;
-    border-radius: 4px;
-    font-weight: 500;
-}
-QPushButton:hover {
-    background-color: #2980b9;
-}
-QPushButton:pressed {
-    background-color: #21618c;
-}</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="labelOutboundRules">
-            <property name="text">
-             <string>Rules đã thêm:</string>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">font-size: 12px; font-weight: 500; color: #666;</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QListWidget" name="listWidgetOutboundRules">
-            <property name="styleSheet">
-             <string notr="true">QListWidget {
-    border: 1px solid #d0d0d0;
-    border-radius: 4px;
-    background-color: white;
-    padding: 5px;
-}
-QListWidget::item {
-    padding: 0px;
-    border-bottom: 1px solid #f0f0f0;
-    min-height: 35px;
-}
-QListWidget::item:hover {
-    background-color: #f8f9fa;
-}</string>
             </property>
            </widget>
           </item>

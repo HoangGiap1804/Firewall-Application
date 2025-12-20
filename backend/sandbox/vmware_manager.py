@@ -90,17 +90,19 @@ class VMWareManager:
         :param program_path: Full path to executable in guest
         :param no_wait: If True, returns immediately (interactive mode)
         """
-        mode = "noWait" if no_wait else "wait" 
-        # Note: vmrun runProgramInGuest [flags] vmxfile program [program arguments]
-        # Our _run_cmd appends vmx path, then args.
-        # So args passed to _run_cmd should be: [mode, program_path, program_args]
+        # vmrun -T ws -gu user -gp pass runProgramInGuest <vmx> [-noWait] <prog> <args>
         
-        # However, runProgramInGuest arguments must be separate
-        # vmrun -T ws -gu user -gp pass runProgramInGuest <vmx> <mode> <prog> <args>
-        
-        cmd_args = [mode, program_path]
+        cmd_args = []
+        if no_wait:
+            cmd_args.append("-noWait")
+            
+        cmd_args.append(program_path)
+
         if program_args:
-             cmd_args.append(program_args)
+             if isinstance(program_args, list):
+                 cmd_args.extend(program_args)
+             else:
+                 cmd_args.append(program_args)
              
         # Handling arguments with spaces in vmrun is tricky, usually passed as separate args
         
@@ -114,6 +116,22 @@ class VMWareManager:
         output = self._run_cmd("listSnapshots", [])
         lines = output.strip().splitlines()
         return []
+
+    def get_ip(self):
+        """Get guest IP address"""
+        try:
+            # vmrun -T ws getGuestIPAddress <vmx> -wait
+            # Note: -wait might hang if tools not running?
+            # _run_cmd appends vmx path.
+            # We don't need auth usually for getGuestIPAddress?
+            # Actually vmrun documentation says: getGuestIPAddress <path to vmx file> [-wait]
+            # No user/pass needed usually.
+            
+            output = self._run_cmd("getGuestIPAddress", ["-wait"])
+            return output.strip()
+        except Exception as e:
+            print(f"Failed to get IP: {e}")
+            return None
 
     def get_guest_stats(self):
         """
