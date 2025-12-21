@@ -76,6 +76,14 @@ class BlacklistHandler:
         if reply == QMessageBox.StandardButton.Yes:
             if self.manager.unblock_ip(ip):
                 QMessageBox.information(None, "Success", f"IP {ip} has been unblocked.")
+                
+                # Clear from LogTab cache to allow re-blocking
+                try:
+                    from backend.ui.log_tab import remove_from_blocked_ips
+                    remove_from_blocked_ips(ip)
+                except ImportError:
+                    print("⚠️ Could not import remove_from_blocked_ips from log_tab")
+
                 self.refresh_blacklist()
             else:
                 QMessageBox.critical(None, "Error", f"Failed to unblock {ip}. Check console for details.")

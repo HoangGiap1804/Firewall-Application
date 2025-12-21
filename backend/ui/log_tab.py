@@ -80,6 +80,15 @@ def parse_message(msg: str, timestamp: str = ""):
 
 blocked_ips = set()
 
+def remove_from_blocked_ips(ip):
+    """
+    Xóa IP khỏi cache blocked_ips để cho phép chặn lại sau khi unblock.
+    Được gọi từ BlacklistHandler.
+    """
+    if ip in blocked_ips:
+        blocked_ips.remove(ip)
+        print(f"✅ Removed {ip} from LogTab blocked_ips cache")
+
 # Local block_ip removed in favor of BlacklistManager
 
 class LogTab(QtWidgets.QWidget):
@@ -416,6 +425,14 @@ class LogTab(QtWidgets.QWidget):
                     continue
                 
                 src_ip = fields.get("src", "")
+                dst_ip = fields.get("dst", "")
+                
+                # Bỏ qua loopback logs
+                if src_ip in ["127.0.0.1", "localhost"] or src_ip.startswith("127."):
+                    continue
+                if dst_ip in ["127.0.0.1", "localhost"] or dst_ip.startswith("127."):
+                    continue
+
                 if src_ip in blocked_ips:
                     continue
                 
@@ -474,8 +491,11 @@ class LogTab(QtWidgets.QWidget):
         
         data = self.process.readAllStandardOutput().data().decode("utf-8", errors="ignore")
         for line in data.strip().splitlines():
-            # Chỉ xử lý log iptables
             if not is_iptables_log(line):
+                continue
+            
+            # 🔥 Bỏ qua log loopback (không hiển thị và KHÔNG lưu)
+            if "SRC=127.0.0.1" in line or "DST=127.0.0.1" in line or "localhost" in line:
                 continue
             
             # Lưu log vào file với timestamp (chỉ log iptables)
@@ -522,7 +542,8 @@ class LogTab(QtWidgets.QWidget):
                 "FIN/XMAS/NULL Scan": ("Stealth Scan", "High"),
             }
 
-            # 🔥 Kiểm tra từng loại tấn công
+
+            # 🔥 Kiểm tra từng loại tấn công (moved logic into a focused block)
             for pattern, (attack_type, severity) in attack_patterns.items():
                 if pattern in line:
                     print(f"⚠️ {attack_type} detected in log:", line)
@@ -534,35 +555,45 @@ class LogTab(QtWidgets.QWidget):
                     message = f"Từ IP: {src_ip}\nThời gian: {log_time}\nMức độ: {severity}"
                     bg = QColor("#db5858")
 
-                    # 📢 Gửi thông báo hệ thống
-                    send_notification(title, message)
-
                     # 🔒 Chặn IP (Luôn chặn để bảo vệ)
                     if src_ip and src_ip not in blocked_ips:
-                        blocked_ips.add(src_ip)
-                        # Use BlacklistManager to block
-                        reason = f"Attack detected: {attack_type}"
-                        threading.Thread(target=self.blacklist_manager.block_ip, args=(src_ip, reason), daemon=True).start()
+                        # Safety Check: Never block loopback
+                        if src_ip == "127.0.0.1" or src_ip == "localhost" or src_ip.startswith("127."):
+                             print(f"⚠️ Skipped blocking loopback IP: {src_ip}")
+                        # Chỉ chặn IP hợp lệ (có đủ 4 phần x.x.x.x)
+                        # Regex: 4 nhóm số cách nhau bởi dấu chấm
+                        elif not re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", src_ip):
+                             print(f"⚠️ Skipped blocking invalid IP format: {src_ip}")
+                        else:
+                            blocked_ips.add(src_ip)
+                            
+                            # Define worker to block AND notify if successful
+                            def block_and_notify_worker(ip_to_block, reason_text, attack_type_name, severity_level, time_log):
+                                success = self.blacklist_manager.block_ip(ip_to_block, reason_text)
+                                if success:
+                                    # 📢 Gửi thông báo hệ thống CHỈ KHI chặn thành công
+                                    send_notification(title, message)
+                                    
+                                    # 📧 Email Alert (Throttled: 1 email / 1 phút)
+                                    import time
+                                    current_time = time.time()
+                                    last_alert = self.last_alert_time.get(attack_type_name, 0)
+                                    
+                                    if current_time - last_alert >= 60: # 60 seconds throttle
+                                         try:
+                                             send_attack_alert(attack_type_name, ip_to_block, severity_level, time_log)
+                                             # Cập nhật thời gian gửi mail cuối cùng
+                                             self.last_alert_time[attack_type_name] = current_time
+                                             print(f"📧 Alert email sent for {attack_type_name}")
+                                         except Exception as e:
+                                             print("❌ Error sending alert email:", e)
+                                    else:
+                                        print(f"⏳ Skipped email for {attack_type_name} due to rate limit")
 
-                    # 📧 Email Alert (Throttled: 1 email / 1 phút)
-                    import time
-                    current_time = time.time()
-                    last_alert = self.last_alert_time.get(attack_type, 0)
-                    
-                    if current_time - last_alert >= 60: # 60 seconds throttle
-                        def send_alert_thread():
-                            try:
-                                send_attack_alert(attack_type, src_ip, severity, log_time)
-                            except Exception as e:
-                                print("❌ Error sending alert email:", e)
 
-                        threading.Thread(target=send_alert_thread, daemon=True).start()
-          
-                        # Cập nhật thời gian gửi mail cuối cùng
-                        self.last_alert_time[attack_type] = current_time
-                        print(f"📧 Alert email sent for {attack_type}")
-                    else:
-                        print(f"⏳ Skipped email for {attack_type} due to rate limit")
+                            # Use BlacklistManager to block
+                            reason = f"Attack detected: {attack_type}"
+                            threading.Thread(target=block_and_notify_worker, args=(src_ip, reason, attack_type, severity, log_time), daemon=True).start()
                     
                     break  # ✅ Dừng lại nếu đã match 1 loại tấn công
 
