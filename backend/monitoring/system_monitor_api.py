@@ -149,8 +149,11 @@ class SystemMonitorAPI(QObject):
         self.worker.start()
         
         # Update from Local (SSH/VMWare) for CPU/RAM overwrite
-        # Make sure to reload config? Maybe occasionally.
         if self.local_monitor_type:
+            # Check if previous local worker is still running
+            if self.local_worker and self.local_worker.isRunning():
+                return
+
             self.local_worker = LocalStatsWorker(self.local_monitor_type, self.local_config)
             self.local_worker.data_loaded.connect(self._on_local_data_loaded)
             self.local_worker.start()
@@ -266,3 +269,17 @@ class SystemMonitorAPI(QObject):
         except Exception as e:
             print(f"❌ Lỗi khi cập nhật stats: {e}")
 
+    
+    def stop_monitoring(self):
+        """Dừng monitoring và cleanup threads"""
+        self.timer.stop()
+        
+        if self.worker and self.worker.isRunning():
+            self.worker.quit()
+            self.worker.wait(1000) # Wait up to 1s
+            
+        if self.local_worker and self.local_worker.isRunning():
+            self.local_worker.quit()
+            self.local_worker.wait(1000)
+            
+        print("SystemMonitorAPI stopped.")

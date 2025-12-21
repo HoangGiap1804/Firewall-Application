@@ -10,6 +10,15 @@ def send_notification(title: str, message: str):
     """
     try:
         user = os.environ.get('SUDO_USER')
+        if not user:
+            # Check for pkexec user
+            pkexec_uid = os.environ.get('PKEXEC_UID')
+            if pkexec_uid:
+                try:
+                    user = pwd.getpwuid(int(pkexec_uid)).pw_name
+                except Exception:
+                    pass
+
         if user:
             # Running as root via sudo
             try:

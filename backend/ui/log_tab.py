@@ -9,6 +9,7 @@ import threading
 import subprocess
 import os
 from pathlib import Path
+from backend.blacklist.blacklist_manager import BlacklistManager
 
 Roles = [
     "time", "in", "out", "mac", "src", "dst", "len", "tos", "prec",
@@ -79,32 +80,13 @@ def parse_message(msg: str, timestamp: str = ""):
 
 blocked_ips = set()
 
-def block_ip(ip):
-    """
-    Chặn IP bằng iptables (Linux). 
-    Có thể thay bằng nftables nếu bạn dùng nft.
-    """
-    try:
-        # Kiểm tra IP đã bị chặn chưa
-        result = subprocess.run(["iptables", "-C", "INPUT", "-s", ip, "-j", "DROP"],
-                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if result.returncode == 0:
-            print(f"⚠️ IP {ip} đã bị chặn trước đó.")
-            return
-
-        cmd = ["iptables", "-I", "INPUT", "1", "-s", ip, "-j", "DROP"]
-        if os.geteuid() != 0:
-            cmd.insert(0, "sudo")
-        
-        subprocess.run(cmd, check=True)
-        print(f"🚫 Đã chặn IP: {ip}")
-    except Exception as e:
-        print(f"❌ Lỗi khi chặn IP {ip}: {e}")
+# Local block_ip removed in favor of BlacklistManager
 
 class LogTab(QtWidgets.QWidget):
     def __init__(self, tableWidget, date_edit=None, load_button=None, realtime_button=None, search_input=None):
         super().__init__()
         self.tableWidget = tableWidget
+        self.blacklist_manager = BlacklistManager()
 
         self.tableWidget.setColumnCount(len(Roles))
         self.tableWidget.setHorizontalHeaderLabels([r.upper() for r in Roles])
@@ -558,7 +540,9 @@ class LogTab(QtWidgets.QWidget):
                     # 🔒 Chặn IP (Luôn chặn để bảo vệ)
                     if src_ip and src_ip not in blocked_ips:
                         blocked_ips.add(src_ip)
-                        threading.Thread(target=block_ip, args=(src_ip,), daemon=True).start()
+                        # Use BlacklistManager to block
+                        reason = f"Attack detected: {attack_type}"
+                        threading.Thread(target=self.blacklist_manager.block_ip, args=(src_ip, reason), daemon=True).start()
 
                     # 📧 Email Alert (Throttled: 1 email / 1 phút)
                     import time

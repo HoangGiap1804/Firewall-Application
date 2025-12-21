@@ -41,6 +41,8 @@ def load_all_tabs(tab_widget: QtWidgets.QTabWidget):
         ("tab_sandbox", "Sandbox"),
         ("tab_graph", "Graph"),
         ("tab_setting", "Settings"),
+        ("tab_blacklist", "Blacklist"),
+        ("tab_test", "Test"),
     ]
     
     for tab_file, tab_title in tabs_config:

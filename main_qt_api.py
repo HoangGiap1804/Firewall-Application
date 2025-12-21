@@ -12,8 +12,10 @@ from backend.monitoring import setup_charts
 from backend.rules.handlers.rules_table_handler_api import RulesTableHandlerAPI
 from backend.rules.handlers.add_rule_handler_api import AddRuleHandlerAPI
 from backend.rules.handlers import AvailableRulesHandler
+from backend.blacklist.blacklist_handler import BlacklistHandler
 from backend.sandbox.sandbox_handler import SandboxHandler
 from backend.settings.settings_handler import SettingsHandler
+from backend.notifications.notification import send_notification
 from frontend.ui_loader import load_all_tabs
 from service.api_client import get_client
 
@@ -66,6 +68,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self._init_available_rules()
         self._init_sandbox()
         self._init_settings()
+        self._init_blacklist_tab()
+        self._init_test_tab()
         
         # Bắt đầu monitoring trên service
         try:
@@ -179,11 +183,26 @@ class MainWindow(QtWidgets.QMainWindow):
         """Khởi tạo Settings Handler"""
         self.settings_handler = SettingsHandler(self.ui)
 
+    def _init_blacklist_tab(self):
+        """Khởi tạo Blacklist Handler"""
+        self.blacklist_handler = BlacklistHandler(self.ui)
+
+    def _init_test_tab(self):
+        """Khởi tạo Test Tab logic"""
+        if hasattr(self.ui, 'btnTestNotification'):
+            self.ui.btnTestNotification.clicked.connect(self._test_notification)
+            
+    def _test_notification(self):
+        """Gửi thông báo test"""
+        send_notification("Test Notification", "This is a test notification from the application.")
+
 
     
     def closeEvent(self, event):
         """Xử lý khi đóng ứng dụng"""
         # Có thể dừng monitoring nếu cần
+        if hasattr(self, 'monitor'):
+             self.monitor.stop_monitoring()
         # self.client.stop_monitoring()
         event.accept()
 

@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ui version="4.0">
+ <class>tab_blacklist</class>
+ <widget class="QWidget" name="tab_blacklist">
+  <attribute name="title">
+   <string>Blacklist</string>
+  </attribute>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>10</number>
+   </property>
+   <property name="leftMargin">
+    <number>10</number>
+   </property>
+   <property name="topMargin">
+    <number>10</number>
+   </property>
+   <property name="rightMargin">
+    <number>10</number>
+   </property>
+   <property name="bottomMargin">
+    <number>10</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLabel" name="label_title">
+       <property name="text">
+        <string>Blocked IP Addresses</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 16px; font-weight: bold; color: #c0392b;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnRefreshBlacklist">
+       <property name="text">
+        <string>Refresh List</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">
+         QPushButton {
+          background-color: #3498db; 
+          color: white; 
+          padding: 6px 12px; 
+          border-radius: 4px; 
+          font-weight: bold;
+         }
+         QPushButton:hover {
+          background-color: #2980b9;
+         }
+        </string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableBlacklist">
+     <property name="styleSheet">
+      <string notr="true">
+       QTableWidget {
+        border: 1px solid #dcdcdc;
+        gridline-color: #ecf0f1;
+        background-color: white;
+       }
+       QHeaderView::section {
+        background-color: #ecf0f1;
+        padding: 4px;
+        border: 1px solid #dcdcdc;
+        font-weight: bold;
+       }
+      </string>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <column>
+      <property name="text">
+       <string>IP Address</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Rule</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Action</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources />
+ <connections />
+</ui>
