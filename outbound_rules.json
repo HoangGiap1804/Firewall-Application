@@ -1,0 +1,7 @@
+[
+    {
+        "protocol": "tcp",
+        "port": "12000",
+        "rule_info": "TCP:12000"
+    }
+]

@@ -70,7 +70,7 @@ def setup_charts(ui, monitor):
     lbl_free_disk.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
     # Tạo host monitor và charts manager cho máy thật
-    host_monitor = HostSystemMonitor(interval=3000)  # Cập nhật mỗi 3 giây
+    host_monitor = HostSystemMonitor(interval=1000)  # Cập nhật mỗi 1 giây
     host_charts_manager = SystemChartsManager(host_monitor, label_services=lbl_services, label_free_disk=lbl_free_disk)
     
     # Kết nối sự kiện click cho service label
@@ -144,7 +144,7 @@ def setup_charts(ui, monitor):
     
     # Bắt đầu giám sát
     sandbox_charts_manager.start_monitoring(2000)  # Sandbox: 2 giây
-    host_charts_manager.start_monitoring(3000)  # Host: 3 giây
+    host_charts_manager.start_monitoring(1000)  # Host: 1 giây
     
     return sandbox_charts_manager, host_charts_manager
 
