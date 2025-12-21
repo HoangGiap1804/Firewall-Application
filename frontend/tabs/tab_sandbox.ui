@@ -5,408 +5,445 @@
   <attribute name="title">
    <string>Sandbox</string>
   </attribute>
-  <layout class="QHBoxLayout" name="horizontalLayout_sandbox">
+  <layout class="QVBoxLayout" name="verticalLayoutMain">
    <property name="spacing">
-    <number>20</number>
+    <number>0</number>
    </property>
    <property name="leftMargin">
-    <number>20</number>
+    <number>0</number>
    </property>
    <property name="topMargin">
-    <number>20</number>
+    <number>0</number>
    </property>
    <property name="rightMargin">
-    <number>20</number>
+    <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>20</number>
+    <number>0</number>
    </property>
    <item>
-    <widget class="QFrame" name="frameSystemContainers">
-     <property name="styleSheet">
-      <string notr="true">QFrame#frameSystemContainers {
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>752</width>
+        <height>550</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_sandbox">
+       <property name="spacing">
+        <number>5</number>
+       </property>
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>5</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>5</number>
+       </property>
+       <item>
+        <widget class="QFrame" name="frameSystemContainers">
+         <property name="styleSheet">
+          <string notr="true">QFrame#frameSystemContainers {
     border: 2px solid #e0e0e0;
     border-radius: 12px;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 #ffffff, stop:1 #f8f9fa);
-    padding: 20px;
+    padding: 5px;
 }
 </string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_5">
-      <property name="spacing">
-       <number>15</number>
-      </property>
-      <item>
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>System Containers</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">font-weight: 600; 
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <property name="spacing">
+           <number>5</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>System Containers</string>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">font-weight: 600; 
 font-size: 18px; 
 color: #2c3e50;
 padding-bottom: 10px;
 border-bottom: 2px solid #27ae60;
 </string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_file_select">
-        <property name="spacing">
-         <number>15</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="label_image_path">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 600; 
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_file_select">
+            <property name="spacing">
+             <number>15</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_image_path">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 600; 
 font-size: 14px; 
 color: #34495e;
 </string>
-          </property>
-          <property name="text">
-           <string>Image:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="lineEdit_imagePath">
-          <property name="readOnly">
-           <bool>true</bool>
-          </property>
-          <property name="placeholderText">
-           <string>Select rootfs or image...</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">padding: 6px; border: 1px solid #ccc; border-radius: 4px;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btn_selectFile">
-          <property name="text">
-           <string>Browse</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: #3498db; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_sandbox_actions">
-        <property name="spacing">
-         <number>15</number>
-        </property>
-        <item>
-         <widget class="QPushButton" name="btn_importImage">
-          <property name="text">
-           <string>Send File</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: #27ae60; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btn_run_sandbox">
-          <property name="text">
-           <string>Run Test</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: #e67e22; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="btn_stop_sandbox">
-          <property name="text">
-           <string>Stop Test</string>
-          </property>
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: #c0392b; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_15">
-        <property name="spacing">
-         <number>15</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 600; 
+              </property>
+              <property name="text">
+               <string>Image:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEdit_imagePath">
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="placeholderText">
+               <string>Select rootfs or image...</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">padding: 6px; border: 1px solid #ccc; border-radius: 4px;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_selectFile">
+              <property name="text">
+               <string>Browse</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: #3498db; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_sandbox_actions">
+            <property name="spacing">
+             <number>15</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="btn_importImage">
+              <property name="text">
+               <string>Send File</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: #27ae60; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_run_sandbox">
+              <property name="text">
+               <string>Run Test</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: #e67e22; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_stop_sandbox">
+              <property name="text">
+               <string>Stop Test</string>
+              </property>
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color: #c0392b; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_15">
+            <property name="spacing">
+             <number>15</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 600; 
 font-size: 14px; 
 color: #34495e;
 </string>
-          </property>
-          <property name="text">
-           <string>RAM:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_ram">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 500; 
+              </property>
+              <property name="text">
+               <string>RAM:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_ram">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; 
 font-size: 14px; 
 color: #27ae60;
 background-color: #d5f4e6;
 padding: 6px 12px;
 border-radius: 6px;
 </string>
-          </property>
-          <property name="text">
-           <string>RAM</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_21">
-        <property name="spacing">
-         <number>15</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="label_2">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 600; 
+              </property>
+              <property name="text">
+               <string>RAM</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_21">
+            <property name="spacing">
+             <number>15</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_2">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 600; 
 font-size: 14px; 
 color: #34495e;
 </string>
-          </property>
-          <property name="text">
-           <string>CPU:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_cpu">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 500; 
+              </property>
+              <property name="text">
+               <string>CPU:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_cpu">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; 
 font-size: 14px; 
 color: #3498db;
 background-color: #ebf5fb;
 padding: 6px 12px;
 border-radius: 6px;
 </string>
-          </property>
-          <property name="text">
-           <string>CPU</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_22">
-        <property name="spacing">
-         <number>15</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="label_5">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 600; 
+              </property>
+              <property name="text">
+               <string>CPU</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_22">
+            <property name="spacing">
+             <number>15</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_5">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 600; 
 font-size: 14px; 
 color: #34495e;
 </string>
-          </property>
-          <property name="text">
-           <string>Network:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_network">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 500; 
+              </property>
+              <property name="text">
+               <string>Network:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_network">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; 
 font-size: 14px; 
 color: #e67e22;
 background-color: #fef5e7;
 padding: 6px 12px;
 border-radius: 6px;
 </string>
-          </property>
-          <property name="text">
-           <string>Network</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_23">
-        <property name="spacing">
-         <number>15</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="label_7">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 600; 
+              </property>
+              <property name="text">
+               <string>Network</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_23">
+            <property name="spacing">
+             <number>15</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_7">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 600; 
 font-size: 14px; 
 color: #34495e;
 </string>
-          </property>
-          <property name="text">
-           <string>Disk:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_disk">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 500; 
+              </property>
+              <property name="text">
+               <string>Disk:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_disk">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; 
 font-size: 14px; 
 color: #9b59b6;
 background-color: #f4ecf7;
 padding: 6px 12px;
 border-radius: 6px;
 </string>
-          </property>
-          <property name="text">
-           <string>Disk</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_24">
-        <property name="spacing">
-         <number>15</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="label_9">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 600; 
+              </property>
+              <property name="text">
+               <string>Disk</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_24">
+            <property name="spacing">
+             <number>15</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label_9">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 600; 
 font-size: 14px; 
 color: #34495e;
 </string>
-          </property>
-          <property name="text">
-           <string>Service:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_service">
-          <property name="minimumSize">
-           <size>
-            <width>100</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 500; 
+              </property>
+              <property name="text">
+               <string>Service:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_service">
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font-weight: 500; 
 font-size: 14px; 
 color: #e74c3c;
 background-color: #fadbd8;
 padding: 6px 12px;
 border-radius: 6px;
 </string>
-          </property>
-          <property name="text">
-           <string>Service</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QFrame" name="frameGraph">
-     <property name="styleSheet">
-      <string notr="true">QFrame#frameGraph {
+              </property>
+              <property name="text">
+               <string>Service</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QFrame" name="frameGraph">
+         <property name="styleSheet">
+          <string notr="true">QFrame#frameGraph {
     border: 2px solid #e0e0e0;
     border-radius: 12px;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 #ffffff, stop:1 #f8f9fa);
 }
 </string>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>

@@ -3,11 +3,11 @@
  <class>Dialog</class>
  <widget class="QDialog" name="Dialog">
   <property name="geometry">
-   <rect>
+    <rect>
     <x>0</x>
     <y>0</y>
-    <width>747</width>
-    <height>865</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,7 +36,7 @@ QTabBar::tab {
     border-bottom: none;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
-    padding: 8px 16px;
+    padding: 4px 8px;
     margin-right: 2px;
     font-weight: 500;
     font-size: 12px;
