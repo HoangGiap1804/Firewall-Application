@@ -89,7 +89,13 @@ class SystemMonitorAPI(QObject):
         self.current_ram_percent = 0
         self.current_temperature = 0
         self.current_network_rx = 0
+        self.current_network_rx = 0
         self.current_network_tx = 0
+        
+        # Props for Network Speed Calculation (SSH)
+        self.prev_net_rx = 0
+        self.prev_net_tx = 0
+        self.prev_net_time = time.time()
         
         self.worker = None  # Worker thread
         self.local_worker = None
@@ -150,7 +156,37 @@ class SystemMonitorAPI(QObject):
             self.local_worker.start()
 
     def _on_local_data_loaded(self, stats):
-        used, total, cpu = stats
+        # Default defaults
+        used, total, cpu = 0, 0, 0
+        disk_free = 0
+        services = 0
+        
+        has_extended_stats = False
+
+        if len(stats) == 7: # SSH with Network
+             used, total, cpu, disk_free, services, rx_bytes, tx_bytes = stats
+             has_extended_stats = True
+             
+             # Calculate Speed
+             now = time.time()
+             delta_time = now - self.prev_net_time
+             
+             if delta_time > 0 and self.prev_net_rx > 0:
+                 self.current_network_rx = (rx_bytes - self.prev_net_rx) / delta_time
+                 self.current_network_tx = (tx_bytes - self.prev_net_tx) / delta_time
+             
+             # Update Prev
+             self.prev_net_rx = rx_bytes
+             self.prev_net_tx = tx_bytes
+             self.prev_net_time = now
+
+        elif len(stats) == 5: # Old SSH setup (should not hit this if code updated together)
+            used, total, cpu, disk_free, services = stats
+            has_extended_stats = True
+        elif len(stats) == 3: # VMWare
+            used, total, cpu = stats
+        else:
+            return # Should not happen based on current logic but good safety
         
         # Overwrite CPU
         self.current_cpu_percent = cpu
@@ -163,6 +199,14 @@ class SystemMonitorAPI(QObject):
             self.current_ram_percent = percent
             if self._label_ram:
                 self._label_ram.setText(f"{used:.1f} MB ({percent:.1f}%)")
+
+        # Overwrite Disk/Service (Only for SSH/Extended)
+        if has_extended_stats:
+             if self._label_disk:
+                 self._label_disk.setText(f"Free: {disk_free:.2f} GB")
+             
+             if self._label_service:
+                 self._label_service.setText(f"Active Services: {services}")
     
     def _on_data_loaded(self, data):
         """Xử lý khi monitoring data đã được load xong"""
@@ -170,24 +214,27 @@ class SystemMonitorAPI(QObject):
             if not data:
                 return
             
-            # Cập nhật CPU
-            cpu_percent = data.get("cpu_percent", 0)
-            self.current_cpu_percent = cpu_percent
-            if self._label_cpu:
-                self._label_cpu.setText(f"{cpu_percent:.1f}%")
+            # Cập nhật CPU (chỉ nếu không dùng local monitor)
+            if not self.local_monitor_type:
+                cpu_percent = data.get("cpu_percent", 0)
+                self.current_cpu_percent = cpu_percent
+                if self._label_cpu:
+                    self._label_cpu.setText(f"{cpu_percent:.1f}%")
             
-            # Cập nhật RAM
-            ram_percent = data.get("ram_percent", 0)
-            ram_mb = data.get("ram_mb", 0)
-            self.current_ram_percent = ram_percent
-            if self._label_ram:
-                self._label_ram.setText(f"{ram_mb:.1f} MB ({ram_percent:.1f}%)")
+            # Cập nhật RAM (chỉ nếu không dùng local monitor)
+            if not self.local_monitor_type:
+                ram_percent = data.get("ram_percent", 0)
+                ram_mb = data.get("ram_mb", 0)
+                self.current_ram_percent = ram_percent
+                if self._label_ram:
+                    self._label_ram.setText(f"{ram_mb:.1f} MB ({ram_percent:.1f}%)")
             
-            # Cập nhật Disk
-            disk_read = data.get("disk_read_mb", 0)
-            disk_write = data.get("disk_write_mb", 0)
-            if self._label_disk:
-                self._label_disk.setText(f"↑ {disk_write:.1f} MB  ↓ {disk_read:.1f} MB")
+            # Cập nhật Disk (chỉ nếu không dùng local monitor)
+            if not self.local_monitor_type:
+                disk_read = data.get("disk_read_mb", 0)
+                disk_write = data.get("disk_write_mb", 0)
+                if self._label_disk:
+                    self._label_disk.setText(f"↑ {disk_write:.1f} MB  ↓ {disk_read:.1f} MB")
             
             # Cập nhật Network processes
             net_procs = data.get("network_procs", 0)
@@ -202,10 +249,11 @@ class SystemMonitorAPI(QObject):
             self.current_network_rx = data.get("network_rx", 0)
             self.current_network_tx = data.get("network_tx", 0)
             
-            # Cập nhật Services
-            services_count = data.get("services_count", 0)
-            if self._label_service:
-                self._label_service.setText(f"{services_count} running services")
+            # Cập nhật Services (chỉ nếu không dùng local monitor)
+            if not self.local_monitor_type:
+                services_count = data.get("services_count", 0)
+                if self._label_service:
+                    self._label_service.setText(f"{services_count} running services")
             
             # Xử lý alerts
             alerts = data.get("alerts", [])

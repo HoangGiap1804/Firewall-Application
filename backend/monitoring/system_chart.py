@@ -33,7 +33,9 @@ class SingleChart(QWidget):
         # Dữ liệu lịch sử (lưu tối đa 60 điểm)
         self.max_points = 60
         self.time_data = []
-        self.data_values = []
+        self.data_values = []      # For single line charts
+        self.rx_values = []        # For Network RX
+        self.tx_values = []        # For Network TX
         
         # Timer để cập nhật dữ liệu
         self.timer = QTimer()
@@ -57,32 +59,56 @@ class SingleChart(QWidget):
         
         # Tạo series
         self.series = QLineSeries()
+        self.series_rx = None
+        self.series_tx = None
+        
         if self.chart_type == "CPU":
             self.series.setName("CPU Usage (%)")
             self.series.setColor(Qt.GlobalColor.blue)
+            self.series.setColor(Qt.GlobalColor.blue)
+            self.chart.addSeries(self.series)
         elif self.chart_type == "RAM":
             self.series.setName("RAM Usage (%)")
             self.series.setColor(Qt.GlobalColor.red)
+            self.series.setColor(Qt.GlobalColor.red)
+            self.chart.addSeries(self.series)
         elif self.chart_type == "Temperature":
             self.series.setName("Temperature (°C)")
             self.series.setColor(Qt.GlobalColor.magenta)
+            self.series.setColor(Qt.GlobalColor.magenta)
+            self.chart.addSeries(self.series)
         elif self.chart_type == "Network":
-            self.series.setName("Network Traffic (B/s)")
-            self.series.setColor(Qt.GlobalColor.green)
+            # Network displays 2 lines
+            self.series = None # Not used for Network
+            
+            self.series_rx = QLineSeries()
+            self.series_rx.setName("RX (In)")
+            self.series_rx.setColor(Qt.GlobalColor.green)
+            self.chart.addSeries(self.series_rx)
+            
+            self.series_tx = QLineSeries()
+            self.series_tx.setName("TX (Out)")
+            self.series_tx.setColor(Qt.GlobalColor.red)
+            self.chart.addSeries(self.series_tx)
         else:
             self.series.setName(f"{self.chart_type} Usage (%)")
             self.series.setColor(Qt.GlobalColor.blue)
-        
-        # Thêm series vào chart
-        self.chart.addSeries(self.series)
+            self.chart.addSeries(self.series)
         
         # Tạo và cấu hình trục X (thời gian)
         self.axis_x = QValueAxis()
         self.axis_x.setTitleText("Time (seconds)")
         self.axis_x.setRange(0, 60)  # Hiển thị 60 giây
         self.axis_x.setLabelFormat("%d")
+        self.axis_x.setLabelFormat("%d")
         self.chart.addAxis(self.axis_x, Qt.AlignmentFlag.AlignBottom)
-        self.series.attachAxis(self.axis_x)
+        
+        # Attach series to X axis
+        if self.chart_type == "Network":
+            self.series_rx.attachAxis(self.axis_x)
+            self.series_tx.attachAxis(self.axis_x)
+        else:
+            self.series.attachAxis(self.axis_x)
         
         # Tạo và cấu hình trục Y
         self.axis_y = QValueAxis()
@@ -103,7 +129,12 @@ class SingleChart(QWidget):
             self.axis_y.setRange(0, 100)
             self.axis_y.setLabelFormat("%.0f")
         self.chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
-        self.series.attachAxis(self.axis_y)
+        
+        if self.chart_type == "Network":
+            self.series_rx.attachAxis(self.axis_y)
+            self.series_tx.attachAxis(self.axis_y)
+        else:
+            self.series.attachAxis(self.axis_y)
         
         # Tạo chart view
         self.chart_view = QChartView(self.chart)
@@ -138,7 +169,10 @@ class SingleChart(QWidget):
         if len(self.time_data) > 0 and self.time_data[0] < 0:
             # Xóa dữ liệu mẫu và reset start_time
             self.time_data.clear()
+            self.time_data.clear()
             self.data_values.clear()
+            self.rx_values.clear()
+            self.tx_values.clear()
             self.start_time = time.time()
             # Reset trục X về 0-60
             self.axis_x.setRange(0, 60)
@@ -147,18 +181,39 @@ class SingleChart(QWidget):
         
         # Thêm dữ liệu mới
         self.time_data.append(current_time)
-        self.data_values.append(value)
+        
+        if self.chart_type == "Network":
+            if isinstance(value, tuple) and len(value) == 2:
+                self.rx_values.append(value[0])
+                self.tx_values.append(value[1])
+            else:
+                # Fallback purely for safety
+                self.rx_values.append(value)
+                self.tx_values.append(0)
+        else:
+            self.data_values.append(value)
         
         # Giới hạn số điểm dữ liệu
         if len(self.time_data) > self.max_points:
             self.time_data.pop(0)
-            self.data_values.pop(0)
+            if self.chart_type == "Network":
+                if self.rx_values: self.rx_values.pop(0)
+                if self.tx_values: self.tx_values.pop(0)
+            else:
+                self.data_values.pop(0)
         
         # Cập nhật series
-        self.series.clear()
-        
-        for i, t in enumerate(self.time_data):
-            self.series.append(t, self.data_values[i])
+        if self.chart_type == "Network":
+            self.series_rx.clear()
+            self.series_tx.clear()
+            for i, t in enumerate(self.time_data):
+                if i < len(self.rx_values):
+                    self.series_rx.append(t, self.rx_values[i])
+                    self.series_tx.append(t, self.tx_values[i])
+        else:
+            self.series.clear()
+            for i, t in enumerate(self.time_data):
+                self.series.append(t, self.data_values[i])
         
         # Cập nhật phạm vi trục X để cuộn theo thời gian
         if current_time > 60:
@@ -167,9 +222,13 @@ class SingleChart(QWidget):
             self.axis_x.setRange(0, 60)
         
         # Tự động điều chỉnh trục Y cho Network chart
-        if self.chart_type == "Network" and len(self.data_values) > 0:
-            min_val = min(self.data_values)
-            max_val = max(self.data_values)
+        if self.chart_type == "Network" and len(self.rx_values) > 0:
+            # check both rx and tx for max
+            all_vals = self.rx_values + self.tx_values
+            if not all_vals: return
+            
+            min_val = min(all_vals)
+            max_val = max(all_vals)
             
             # Nếu có dữ liệu, điều chỉnh range
             if max_val > 0:
@@ -207,11 +266,16 @@ class SingleChart(QWidget):
 class SystemChartsManager:
     """Quản lý cả 4 chart CPU, RAM, Temperature và Network Traffic, nhận dữ liệu từ SystemMonitor"""
     
-    def __init__(self, monitor=None):
+    def __init__(self, monitor=None, label_services=None, label_free_disk=None):
         """
         monitor: SystemMonitor instance để lấy dữ liệu
+        label_services: QLabel để hiển thị số lượng service
+        label_free_disk: QLabel để hiển thị free Disk space
         """
         self.monitor = monitor
+        self.label_services = label_services
+        self.label_free_disk = label_free_disk
+        
         self.cpu_chart = SingleChart("CPU")
         self.ram_chart = SingleChart("RAM")
         self.temp_chart = SingleChart("Temperature")
@@ -233,13 +297,23 @@ class SystemChartsManager:
             network_rx = getattr(self.monitor, 'current_network_rx', 0)  # bytes per second
             network_tx = getattr(self.monitor, 'current_network_tx', 0)  # bytes per second
             
+            # New stats
+            services_count = getattr(self.monitor, 'current_services_count', 0)
+            disk_free = getattr(self.monitor, 'current_disk_free', 0)
+            
             self.cpu_chart.add_data_point(cpu_percent)
             self.ram_chart.add_data_point(ram_percent)
             self.temp_chart.add_data_point(temperature)
-            # Tính tổng network traffic: (rx + tx) bytes per second
-            # network_rx và network_tx đã là bytes per second (từ dữ liệu mới - dữ liệu cũ)
-            network_total_bps = network_rx + network_tx  # Giữ nguyên bytes per second
-            self.network_chart.add_data_point(network_total_bps)
+            # Pass tuple (rx, tx) for Network chart
+            self.network_chart.add_data_point((network_rx, network_tx))
+            
+            # Update Labels
+            if self.label_services:
+                self.label_services.setText(f"Active Services: {services_count}")
+            
+            if self.label_free_disk:
+                self.label_free_disk.setText(f"Free Disk: {disk_free:.2f} GB")
+                
         except Exception as e:
             print(f"Error updating chart data: {e}")
     

@@ -3,7 +3,7 @@ Main GUI Application sử dụng Firewall Service API
 """
 
 from PyQt6 import QtWidgets, uic
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtWidgets import QMessageBox
 import sys
 
@@ -24,6 +24,28 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = uic.loadUi("frontend/main.ui")
+        # Enable Min/Max buttons for QDialog and force top-level window behavior
+        self.ui.setWindowFlags(
+            Qt.WindowType.Window |
+            Qt.WindowType.WindowMinimizeButtonHint |
+            Qt.WindowType.WindowMaximizeButtonHint |
+            Qt.WindowType.WindowCloseButtonHint
+        )
+        # Ensure the dialog is resizable
+        self.ui.setSizeGripEnabled(True)
+        
+        # Wrap tabWidget in QScrollArea for scrollable UI
+        scroll_area = QtWidgets.QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
+        
+        tab_widget = self.ui.tabWidget
+        layout = self.ui.layout()
+        
+        if layout and tab_widget:
+            layout.removeWidget(tab_widget)
+            scroll_area.setWidget(tab_widget)
+            layout.addWidget(scroll_area, 0, 0)
         
         # Kiểm tra kết nối service
         self.client = get_client()

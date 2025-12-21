@@ -21,7 +21,7 @@
    <property name="bottomMargin">
     <number>15</number>
    </property>
-   <item row="0" column="0">
+   <item row="0" column="1">
     <widget class="QFrame" name="frameGraphCPU">
      <property name="styleSheet">
       <string notr="true">QFrame#frameGraphCPU {
@@ -41,7 +41,7 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="1">
+   <item row="0" column="2">
     <widget class="QFrame" name="frameGraphRAM">
      <property name="styleSheet">
       <string notr="true">QFrame#frameGraphRAM {
@@ -61,7 +61,7 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item row="1" column="1">
     <widget class="QFrame" name="frameGraphTemperature">
      <property name="styleSheet">
       <string notr="true">QFrame#frameGraphTemperature {
@@ -81,10 +81,50 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="1">
+   <item row="1" column="2">
     <widget class="QFrame" name="frameGraphNetwork">
      <property name="styleSheet">
       <string notr="true">QFrame#frameGraphNetwork {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #ffffff, stop:1 #f8f9fa);
+    padding: 10px;
+}
+</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QFrame" name="frameGraphServices">
+     <property name="styleSheet">
+      <string notr="true">QFrame#frameGraphServices {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #ffffff, stop:1 #f8f9fa);
+    padding: 10px;
+}
+</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QFrame" name="frameGraphDisk">
+     <property name="styleSheet">
+      <string notr="true">QFrame#frameGraphDisk {
     border: 2px solid #e0e0e0;
     border-radius: 12px;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,

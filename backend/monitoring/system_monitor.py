@@ -120,7 +120,8 @@ class SystemMonitor(QObject):
     def update_stats_ssh(self):
         """Fetch and update stats via SSH"""
         try:
-             used, total, cpu = self.ssh_monitor.get_stats()
+             # Unpack 5 values
+             used, total, cpu, disk_free, services = self.ssh_monitor.get_stats()
              
              # RAM
              percent_ram = (used / total * 100) if total > 0 else 0
@@ -134,6 +135,16 @@ class SystemMonitor(QObject):
              label_cpu = self.ui.findChild(QLabel, "label_cpu")
              if label_cpu:
                  label_cpu.setText(f"{cpu:.1f}%")
+
+             # Disk
+             label_disk = self.ui.findChild(QLabel, "label_disk")
+             if label_disk:
+                 label_disk.setText(f"Free: {disk_free:.2f} GB")
+
+             # Services
+             label_service = self.ui.findChild(QLabel, "label_service")
+             if label_service:
+                 label_service.setText(f"Active Services: {services}")
                  
         except Exception as e:
             print(f"SSH Stats Error: {e}")

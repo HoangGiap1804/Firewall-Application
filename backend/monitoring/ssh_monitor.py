@@ -11,11 +11,19 @@ class SSHMonitor:
         Get RAM and CPU usage via SSH using `top` (for CPU) and /proc/meminfo (for RAM).
         Returns: (ram_used_mb, ram_total_mb, cpu_percent)
         """
-        # CPU: "top -bn2 -d 0.5" gives 2 samples. The first is boot avg, second is current.
-        # We grab the last "Cpu(s)" line.
-        # RAM: cat /proc/meminfo is robust.
-        
-        cmd = "top -bn2 -d 0.5 | grep 'Cpu(s)' | tail -1; cat /proc/meminfo"
+        # Command to fetch all stats in one go
+        # 5. Network (proc/net/dev)
+        cmd = (
+            "top -bn2 -d 0.5 | grep 'Cpu(s)' | tail -1; "
+            "echo '---SPLIT---'; "
+            "cat /proc/meminfo; "
+            "echo '---SPLIT---'; "
+            "df -B1 --output=avail / | tail -1; "
+            "echo '---SPLIT---'; "
+            "systemctl list-units --type=service --state=running --no-pager --no-legend | wc -l; "
+            "echo '---SPLIT---'; "
+            "cat /proc/net/dev"
+        )
         
         # Add StrictHostKeyChecking=no to avoid issues when running as root (pkexec)
         # where known_hosts might be empty.
@@ -34,46 +42,90 @@ class SSHMonitor:
             result = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=6)
             if result.returncode != 0:
                 print(f"SSH Error: {result.stderr}")
-                return 0, 0, 0
+                return 0, 0, 0, 0, 0, 0, 0
                 
-            lines = result.stdout.strip().splitlines()
+            # Parse Sections
+            parts = result.stdout.strip().split("---SPLIT---")
             
-            # Parse Data
+            # Default values
             cpu_usage = 0
             mem_total = 0
             mem_available = 0
+            disk_free_gb = 0
+            service_count = 0
             
-            # Line 0 should be Cpu(s)... but verify
-            # Example: %Cpu(s):  1.0 us,  1.0 sy,  0.0 ni, 98.0 id, ...
+            # Section 1: CPU
+            if len(parts) > 0:
+                cpu_lines = parts[0].strip().splitlines()
+                for line in cpu_lines:
+                    if "Cpu(s)" in line:
+                         try:
+                             line_parts = line.split(',')
+                             for p in line_parts:
+                                 if 'id' in p:
+                                     # p like " 98.0 id"
+                                     idle_str = p.strip().split()[0]
+                                     cpu_usage = 100.0 - float(idle_str)
+                                     break
+                         except:
+                             pass
             
-            for line in lines:
-                if "Cpu(s)" in line:
-                     # Parse idle time and subtract from 100
-                     # Flexible parsing: find 'id' token and take the number before it
-                     try:
-                         parts = line.split(',')
-                         for p in parts:
-                             if 'id' in p:
-                                 # p like " 98.0 id"
-                                 idle_str = p.strip().split()[0]
-                                 cpu_usage = 100.0 - float(idle_str)
-                                 break
-                     except:
-                         pass
+            # Section 2: RAM
+            if len(parts) > 1:
+                mem_lines = parts[1].strip().splitlines()
+                for line in mem_lines:
+                    if line.startswith("MemTotal:"):
+                        p = line.split()
+                        if len(p) >= 2: mem_total = int(p[1]) # kB
+                    elif line.startswith("MemAvailable:"):
+                        p = line.split()
+                        if len(p) >= 2: mem_available = int(p[1]) # kB
+
+            # Section 3: Disk
+            if len(parts) > 2:
+                try:
+                    disk_bytes = int(parts[2].strip())
+                    disk_free_gb = disk_bytes / (1024**3)
+                except:
+                    pass
+
+            # Section 4: Services
+            if len(parts) > 3:
+                try:
+                    service_count = int(parts[3].strip())
+                except:
+                    pass
+            
+            # Section 5: Network Traffic
+            rx_bytes = 0
+            tx_bytes = 0
+            if len(parts) > 4:
+                net_lines = parts[4].strip().splitlines()
+                # Skip headers (usually first 2 lines)
+                for line in net_lines:
+                    if ':' in line:
+                         # Clean line: replace : with space to handle "eth0:123" case
+                         clean_line = line.replace(':', ' ')
+                         p = clean_line.split()
+                         # p[0] is interface name
+                         interface = p[0]
+                         if interface == 'lo': 
+                             continue
                          
-                elif line.startswith("MemTotal:"):
-                    parts = line.split()
-                    if len(parts) >= 2: mem_total = int(parts[1]) # kB
-                elif line.startswith("MemAvailable:"):
-                    parts = line.split()
-                    if len(parts) >= 2: mem_available = int(parts[1]) # kB
+                         # p[1] is RX bytes, p[9] is TX bytes (based on standard output)
+                         if len(p) >= 10:
+                             try:
+                                 rx_bytes += int(p[1])
+                                 tx_bytes += int(p[9])
+                             except:
+                                 pass
             
             # RAM Calculation
             ram_used_mb = (mem_total - mem_available) / 1024
             ram_total_mb = mem_total / 1024
             
-            return ram_used_mb, ram_total_mb, cpu_usage
+            return ram_used_mb, ram_total_mb, cpu_usage, disk_free_gb, service_count, rx_bytes, tx_bytes
 
         except Exception as e:
             print(f"SSH Monitor Exception: {e}")
-            return 0, 0, 0
+            return 0, 0, 0, 0, 0, 0, 0

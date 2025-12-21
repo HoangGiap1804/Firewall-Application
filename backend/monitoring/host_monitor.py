@@ -31,6 +31,10 @@ class HostSystemMonitor(QObject):
         self.current_network_rx = 0  # bytes per second
         self.current_network_rx = 0  # bytes per second
         self.current_network_tx = 0  # bytes per second
+        
+        # New stats
+        self.current_services_count = 0
+        self.current_disk_free = 0  # GB
 
         # Alert throttling
         self.last_ram_alert_time = 0
@@ -44,6 +48,8 @@ class HostSystemMonitor(QObject):
         self.update_ram()
         self.update_temperature()
         self.update_network_traffic()
+        self.update_services()
+        self.update_disk()
 
     def update_cpu(self):
         """Lấy CPU usage từ psutil"""
@@ -84,6 +90,45 @@ class HostSystemMonitor(QObject):
         except Exception as e:
             print("❌ RAM error (host):", e)
             self.current_ram_percent = 0
+
+    def update_disk(self):
+        """Lấy dung lượng đĩa trống"""
+        try:
+            # Lấy disk usage của root partition "/"
+            disk = psutil.disk_usage('/')
+            self.current_disk_free = disk.free / (1024 ** 3) # GB
+        except Exception as e:
+            print("❌ Disk error (host):", e)
+            self.current_disk_free = 0
+
+    def update_services(self):
+        """Đếm số lượng active services"""
+        try:
+            # Sử dụng systemctl để đếm số service đang chạy
+            # --no-pager để tránh bị treo ở less
+            cmd = ["systemctl", "list-units", "--type=service", "--state=running", "--no-pager", "--no-legend"]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                # Mỗi dòng là 1 service
+                count = len(result.stdout.strip().splitlines())
+                self.current_services_count = count
+            else:
+                self.current_services_count = 0
+        except Exception as e:
+            print("❌ Services error (host):", e)
+            self.current_services_count = 0
+
+    def get_service_list(self):
+        """Lấy danh sách các service đang chạy"""
+        try:
+            cmd = ["systemctl", "list-units", "--type=service", "--state=running", "--no-pager"]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                return result.stdout
+            else:
+                return f"Error getting services: {result.stderr}"
+        except Exception as e:
+            return f"Error executing systemctl: {str(e)}"
 
     def update_temperature(self):
         """Lấy nhiệt độ CPU từ /sys/class/thermal hoặc psutil"""
