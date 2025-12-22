@@ -91,9 +91,9 @@ class RulesTableHandlerAPI:
         table = self.ui.tableRules
         
         table.setRowCount(0)
-        table.setColumnCount(13)
+        table.setColumnCount(12)
         headers = [
-            "num", "pkts", "bytes", "target", "prot", "opt",
+            "num", "pkts", "bytes", "target", "prot",
             "in", "out", "source", "destination", "chain", "detail", "Action"
         ]
         table.setHorizontalHeaderLabels(headers)
@@ -135,7 +135,7 @@ class RulesTableHandlerAPI:
             table.insertRow(row_index)
             values = [
                 rule["num"], rule["pkts"], rule["bytes"], rule["target"],
-                rule["prot"], rule["opt"], rule["in_"], rule["out"], 
+                rule["prot"], rule["in_"], rule["out"], 
                 rule["source"], rule["destination"], chain, detail
             ]
             
@@ -181,7 +181,7 @@ class RulesTableHandlerAPI:
             btn_delete.clicked.connect(lambda checked, n=rule["num"], c=chain: self.on_delete_clicked(n, c))
             
             layout.addWidget(btn_delete)
-            table.setCellWidget(row_index, 12, container)
+            table.setCellWidget(row_index, 11, container)
             
             # Ensure row has enough height
             table.setRowHeight(row_index, 40)

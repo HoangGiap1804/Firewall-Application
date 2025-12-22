@@ -467,7 +467,7 @@ class LogTab(QtWidgets.QWidget):
                 # Kiểm tra attack patterns
                 for pattern, (attack_type, severity) in attack_patterns.items():
                     if pattern in log_content:
-                        bg = QColor("#db5858")
+                        bg = QColor("#FFCDD2")
                         break
                 
                 # Thêm các cột dữ liệu
@@ -553,7 +553,7 @@ class LogTab(QtWidgets.QWidget):
 
                     title = f"🚨 Phát hiện tấn công {attack_type}"
                     message = f"Từ IP: {src_ip}\nThời gian: {log_time}\nMức độ: {severity}"
-                    bg = QColor("#db5858")
+                    bg = QColor("#FFCDD2")
 
                     # 🔒 Chặn IP (Luôn chặn để bảo vệ)
                     if src_ip and src_ip not in blocked_ips:

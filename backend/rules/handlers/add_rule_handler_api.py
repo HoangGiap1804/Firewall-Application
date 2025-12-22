@@ -12,6 +12,8 @@ class AddRuleHandlerAPI:
     def __init__(self, ui):
         self.ui = ui
         self.client = get_client()
+
+
     
     def _get_widget_text(self, widget_name, default=""):
         """Lấy text từ widget nếu tồn tại"""
@@ -40,6 +42,7 @@ class AddRuleHandlerAPI:
             "action": self._normalize_action(self._get_combo_text("comboAction")),
             "port": self._get_widget_text("editPort"),
             "ip": self._get_widget_text("editSource"),
+            "dst": self._get_widget_text("editDestination"),
             "chain": "INPUT"
         }
         
@@ -47,8 +50,8 @@ class AddRuleHandlerAPI:
     
     def on_add_rule_in_frame_clicked(self, refresh_callback):
         """Lấy dữ liệu từ frameAddRule và gọi API để thêm rule"""
-        interface_in = self._get_widget_text("editAddRuleIn")
-        interface_out = self._get_widget_text("editAddRuleOut")
+        # Get values from UI
+        interface = self._get_widget_text("editAddRuleInterface")
         protocol = self._get_combo_text("comboAddRuleProtocol")
         action = self._get_combo_text("comboAddRuleAction")
         chain = self._get_widget_text("editAddRuleChain") or "INPUT"
@@ -61,15 +64,16 @@ class AddRuleHandlerAPI:
             return
         
         data = {
-            "state": self._get_widget_text("editAddRuleState"),
-            "interface": interface_in or interface_out,
+            "interface": self._get_widget_text("editAddRuleInterface"),
             "protocol": protocol_normalized,
             "action": action_normalized,
-            "port": self._get_widget_text("editAddRulePort"),
+            "detail": self._get_widget_text("editAddRuleDetail"),
             "ip": self._get_widget_text("editAddRuleSource"),
+            "dst": self._get_widget_text("editAddRuleDestination"),
             "chain": chain
         }
         
+        print(f"DTO Payload from Handler: {data}")
         self._call_add_rule_api(data, refresh_callback, clear_form=True)
     
     def _call_add_rule_api(self, data, refresh_callback, clear_form=False):
@@ -90,9 +94,9 @@ class AddRuleHandlerAPI:
     def _clear_add_rule_form(self):
         """Xóa nội dung form sau khi thêm rule thành công"""
         fields = [
-            "editAddRuleState", "editAddRuleIn", "editAddRuleOut",
-            "editAddRulePort", "editAddRuleSource", "editAddRuleDestination",
-            "editAddRuleOpt", "editAddRuleChain"
+            "editAddRuleInterface",
+            "editAddRuleDetail", "editAddRuleSource", "editAddRuleDestination",
+            "editAddRuleChain"
         ]
         for field in fields:
             widget = getattr(self.ui, field, None)

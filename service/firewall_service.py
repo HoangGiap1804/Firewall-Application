@@ -312,12 +312,18 @@ def add_rule():
     """Thêm rule mới"""
     try:
         data = request.json
+        print(f"🔍 DEBUG Service: Received raw data: {data}")
         ip = data.get("ip", "")
-        port = data.get("port", "")
+        # port = data.get("port", "") # Removed
         protocol = data.get("protocol", "")
         action = data.get("action", "")
+        # interface = data.get("interface", "") # Removed
+        # state = data.get("state", "") # Removed
+        
+        detail = data.get("detail", "")
+        # in_interface = data.get("in_interface") # Removed
+        # out_interface = data.get("out_interface") # Removed
         interface = data.get("interface", "")
-        state = data.get("state", "")
         
         # Lấy chain từ request, default về INPUT nếu không có
         chain = data.get("chain")
@@ -360,13 +366,37 @@ def add_rule():
         cmd = ["sudo", "iptables", "-A", chain, "-p", protocol]
         print(f"🔍 DEBUG Service: Command: {' '.join(cmd)}")
         if ip:
-            cmd += ["-s", ip]
-        if port:
-            cmd += ["--dport", port]
+            cmd += ["-s"] + ip.split()
+        
+        # Support destination IP
+        dst = data.get("dst") or data.get("destination")
+        if dst:
+            cmd += ["-d"] + dst.split()
+            
+        # if port:
+        #     cmd += ["--dport", port]
+        
+        # Interface logic
+        # Auto-detect flag based on chain
         if interface:
-            cmd += ["-i", interface]
-        if state:
-            cmd += ["-m", "state", "--state", state]
+            parts = interface.split()
+            if chain == "OUTPUT":
+                cmd += ["-o"] + parts
+            else:
+                 cmd += ["-i"] + parts
+        
+        # if in_interface:
+        #     cmd += ["-i"] + in_interface.split()
+        # if out_interface:
+        #     cmd += ["-o"] + out_interface.split()
+            
+        # if state:
+        #     cmd += ["-m", "state", "--state", state]
+            
+        # Add details (flags) directly
+        if detail:
+            # Tách chuỗi detail thành các arguments
+            cmd += detail.split()
         cmd += ["-j", action]
         
         try:

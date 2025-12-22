@@ -69,7 +69,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self._init_sandbox()
         self._init_settings()
         self._init_blacklist_tab()
-        self._init_test_tab()
         
         # Bắt đầu monitoring trên service
         try:
@@ -187,14 +186,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Khởi tạo Blacklist Handler"""
         self.blacklist_handler = BlacklistHandler(self.ui)
 
-    def _init_test_tab(self):
-        """Khởi tạo Test Tab logic"""
-        if hasattr(self.ui, 'btnTestNotification'):
-            self.ui.btnTestNotification.clicked.connect(self._test_notification)
-            
-    def _test_notification(self):
-        """Gửi thông báo test"""
-        send_notification("Test Notification", "This is a test notification from the application.")
+
 
 
     

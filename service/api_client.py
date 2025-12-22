@@ -67,17 +67,20 @@ class FirewallServiceClient:
         result = self._request("GET", "rules/list")
         return result.get("rules", [])
     
-    def add_rule(self, ip: str = "", port: str = "", protocol: str = "", 
-                 action: str = "", interface: str = "", state: str = "", 
-                 chain: str = "OUTPUT") -> Dict:
+    def add_rule(self, ip: str = "", protocol: str = "", 
+                 action: str = "", interface: str = "", in_interface: str = "", 
+                 out_interface: str = "", detail: str = "", 
+                 chain: str = "OUTPUT", dst: str = "") -> Dict:
         """Thêm rule mới"""
         data = {
             "ip": ip,
-            "port": port,
             "protocol": protocol,
             "action": action,
             "interface": interface,
-            "state": state
+            "in_interface": in_interface,
+            "out_interface": out_interface,
+            "detail": detail,
+            "dst": dst
         }
         # Chỉ thêm chain nếu có giá trị
         if chain and isinstance(chain, str) and chain.strip():

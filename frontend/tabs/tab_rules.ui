@@ -296,42 +296,9 @@ QComboBox::down-arrow {
           </item>
          </widget>
         </item>
+
         <item row="1" column="4">
-         <widget class="QLabel" name="labelAddRuleOpt">
-          <property name="minimumSize">
-           <size>
-            <width>40</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
-          </property>
-          <property name="text">
-           <string>Opt:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="5">
-         <widget class="QLineEdit" name="editAddRuleOpt">
-          <property name="styleSheet">
-           <string notr="true">QLineEdit {
-    border: 1px solid #bdc3c7;
-    border-radius: 5px;
-    padding: 4px 8px;
-    background-color: white;
-    font-size: 12px;
-}
-QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
-QLineEdit:hover { border-color: #95a5a6; }
-</string>
-          </property>
-          <property name="placeholderText">
-           <string>--</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="6">
+
          <widget class="QLabel" name="labelAddRuleChain">
           <property name="minimumSize">
            <size>
@@ -347,7 +314,8 @@ QLineEdit:hover { border-color: #95a5a6; }
           </property>
          </widget>
         </item>
-        <item row="1" column="7">
+        <item row="1" column="5">
+
          <widget class="QLineEdit" name="editAddRuleChain">
           <property name="styleSheet">
            <string notr="true">QLineEdit {
@@ -437,7 +405,7 @@ QLineEdit:hover { border-color: #95a5a6; }
          </widget>
         </item>
         <item row="2" column="4">
-         <widget class="QLabel" name="labelAddRulePort">
+         <widget class="QLabel" name="labelAddRuleDetail">
           <property name="minimumSize">
            <size>
             <width>50</width>
@@ -448,12 +416,12 @@ QLineEdit:hover { border-color: #95a5a6; }
            <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
           </property>
           <property name="text">
-           <string>Port:</string>
+           <string>Detail:</string>
           </property>
          </widget>
         </item>
         <item row="2" column="5">
-         <widget class="QLineEdit" name="editAddRulePort">
+         <widget class="QLineEdit" name="editAddRuleDetail">
           <property name="styleSheet">
            <string notr="true">QLineEdit {
     border: 1px solid #bdc3c7;
@@ -467,50 +435,15 @@ QLineEdit:hover { border-color: #95a5a6; }
 </string>
           </property>
           <property name="placeholderText">
-           <string>80,443</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="labelAddRuleIn">
-          <property name="minimumSize">
-           <size>
-            <width>70</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
-          </property>
-          <property name="text">
-           <string>In:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
-         <widget class="QLineEdit" name="editAddRuleIn">
-          <property name="styleSheet">
-           <string notr="true">QLineEdit {
-    border: 1px solid #bdc3c7;
-    border-radius: 5px;
-    padding: 4px 8px;
-    background-color: white;
-    font-size: 12px;
-}
-QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
-QLineEdit:hover { border-color: #95a5a6; }
-</string>
-          </property>
-          <property name="placeholderText">
-           <string>*</string>
+           <string>--dport 80</string>
           </property>
          </widget>
         </item>
         <item row="3" column="2">
-         <widget class="QLabel" name="labelAddRuleOut">
+         <widget class="QLabel" name="labelAddRuleInterface">
           <property name="minimumSize">
            <size>
-            <width>70</width>
+            <width>60</width>
             <height>0</height>
            </size>
           </property>
@@ -518,12 +451,12 @@ QLineEdit:hover { border-color: #95a5a6; }
            <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
           </property>
           <property name="text">
-           <string>Out:</string>
+           <string>Interface:</string>
           </property>
          </widget>
         </item>
         <item row="3" column="3">
-         <widget class="QLineEdit" name="editAddRuleOut">
+         <widget class="QLineEdit" name="editAddRuleInterface">
           <property name="styleSheet">
            <string notr="true">QLineEdit {
     border: 1px solid #bdc3c7;
@@ -537,45 +470,11 @@ QLineEdit:hover { border-color: #95a5a6; }
 </string>
           </property>
           <property name="placeholderText">
-           <string>*</string>
+           <string>eth0</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="4">
-         <widget class="QLabel" name="labelAddRuleState">
-          <property name="minimumSize">
-           <size>
-            <width>50</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font-weight: 500; font-size: 12px; color: #34495e;</string>
-          </property>
-          <property name="text">
-           <string>State:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="5">
-         <widget class="QLineEdit" name="editAddRuleState">
-          <property name="styleSheet">
-           <string notr="true">QLineEdit {
-    border: 1px solid #bdc3c7;
-    border-radius: 5px;
-    padding: 4px 8px;
-    background-color: white;
-    font-size: 12px;
-}
-QLineEdit:focus { border: 2px solid #3498db; background-color: #f8f9fa; }
-QLineEdit:hover { border-color: #95a5a6; }
-</string>
-          </property>
-          <property name="placeholderText">
-           <string>NEW</string>
-          </property>
-         </widget>
-        </item>
+
         <item row="4" column="0" colspan="8">
          <layout class="QHBoxLayout" name="horizontalLayoutAddRule">
           <property name="spacing">
